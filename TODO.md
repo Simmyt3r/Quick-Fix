@@ -61,8 +61,12 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Post-deploy smoke test
 - [ ] Basic monitoring / error tracking
 
+## Design system
+- [ ] Decide whether to restyle `app/static/css/style.css` to the blue/green/white brand palette now documented in `README.md` — current CSS uses a different placeholder palette (cream/amber/brick) and this is a real visual overhaul, not a quick swap
+- [ ] Swap in a transparent-background export of `logo.png` from the design source if you want to drop the CSS white-chip workaround currently used behind the footer logo
+
 ## Housekeeping
-- [ ] Add `app/static/logo.png` (referenced in the nav, footer, and favicon — nav renders at 30x30, so a square, transparent PNG works best)
+- [x] Add `app/static/logo.png` (referenced in the nav, footer, and favicon)
 - [ ] Replace placeholder stats and testimonial on the landing page with real numbers before launch
 - [ ] Add `LICENSE` file (README references MIT)
 - [ ] Rotate any credentials that were ever pasted outside `.env`

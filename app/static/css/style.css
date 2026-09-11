@@ -491,7 +491,7 @@ footer{
   gap:10px;
   margin-bottom:10px;
 }
-.foot-logo{ width:28px;height:28px; object-fit:contain; }
+.foot-logo{ width:28px;height:28px; object-fit:contain; background:#fff; border-radius:6px; padding:3px; }
 .foot-brand{
   color:var(--paper);
   font-family:'Barlow Condensed', sans-serif;

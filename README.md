@@ -2,7 +2,6 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-> **Status:** migrating from the original PHP/MySQL implementation to a Python/Flask stack. This README documents the target architecture; see [`TODO.md`](TODO.md) for the migration checklist. The product idea and feature set are unchanged.
 
 ## Overview
 
@@ -16,14 +15,14 @@ A marketplace platform connecting customers with verified, on-demand service pro
 | Layer | Technology |
 |---|---|
 | Backend | Python, Flask |
-| Hosting / deploy | Vercel (serverless functions) |
+| Hosting / deploy | Vercel (serverless functions 12 max) |
 | Database | Neon (serverless Postgres) |
 | Media storage | Cloudinary (profile photos, verification docs, job photos) |
 | AI / ML | Hugging Face Inference API |
 | Auth | Flask sessions + Google OAuth |
 | Frontend | HTML5, TailwindCSS — PWA (manifest + service worker) |
 
-*Migrating from: PHP 7.4+, MySQL/MariaDB, Apache/Nginx — see git history for the previous implementation.*
+
 
 ## Core features
 
@@ -73,14 +72,9 @@ QuickFix/
 - A Hugging Face account + API token
 - A Vercel account (for deployment)
 
-### Local setup
+### no Local setup
 
-```bash
-git clone https://github.com/Silabs-Co-Technologies-Ltd/QuickFix.git
-cd QuickFix
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+
 ```
 
 Create a `.env` file locally (never commit this — it should stay in `.gitignore`):
@@ -134,7 +128,7 @@ Visit `http://localhost:5000`.
 
 ## Support
 
-- GitHub Issues: [Project Issues](https://github.com/Silabs-Co-Technologies-Ltd/QuickFix/issues)
+- GitHub Issues: [Project Issues](https://github.com/Simmyt3r/QuickFix/issues)
 - Email: support@quickfix.ng
 
 ## License

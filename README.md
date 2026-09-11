@@ -1,217 +1,147 @@
-# QuickFix Nearby - Professional Service Marketplace
+# QuickFix Nearby — Professional Service Marketplace
 
-A modern, deployment-ready marketplace platform connecting customers with verified service professionals across Nigeria.
+A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
+
+> **Status:** migrating from the original PHP/MySQL implementation to a Python/Flask stack. This README documents the target architecture; see [`TODO.md`](TODO.md) for the migration checklist. The product idea and feature set are unchanged.
 
 ## Overview
 
-QuickFix Nearby is built with a blue-green design system and provides:
+- **24/7 service booking** — customers request services anytime, specifying category, location, and urgency
+- **Verified professionals** — pre-vetted providers with ratings, coverage areas, and identity verification
+- **Live dashboard** — booking/service-request tracking for customers, professionals, and admins
+- **Secure by default** — hashed credentials, CSRF protection, audit-friendly data model
 
-- **24/7 Service Booking**: Customers can request services anytime
-- **Verified Professionals**: Pre-vetted service providers across multiple categories
-- **Real-time Management**: Live dashboard for service tracking and management
-- **Enterprise Security**: Full identity verification, secure payments, and audit trails
+## Tech stack
 
-## Technology Stack
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Hosting / deploy | Vercel (serverless functions) |
+| Database | Neon (serverless Postgres) |
+| Media storage | Cloudinary (profile photos, verification docs, job photos) |
+| AI / ML | Hugging Face Inference API |
+| Auth | Flask sessions + Google OAuth |
+| Frontend | HTML5, TailwindCSS — PWA (manifest + service worker) |
 
-- **Backend**: PHP 7.4+ (Server-side rendering)
-- **Frontend**: HTML5, TailwindCSS, JavaScript
-- **Features**: PWA-ready, Mobile-optimized, Accessible (WCAG 2.1)
-- **Database**: MySQL/MariaDB schema included in `db.sql`
+*Migrating from: PHP 7.4+, MySQL/MariaDB, Apache/Nginx — see git history for the previous implementation.*
 
-## Features
+## Core features
 
-### Core Capabilities
+1. **Customer booking** — location-based requests, category selection, urgency level, scheduling
+2. **Professional management** — profiles, availability, coverage area, ratings, earnings, verification
+3. **Admin controls** — lead review, provider approval, incident tracking, reporting
 
-1. **Customer Booking**
-   - Location-based service requests
-   - Service category selection
-   - Urgency level specification
-   - Schedule preferences
+### Service categories
 
-2. **Provider Management**
-   - Comprehensive professional profiles
-   - Availability management
-   - Territory coverage mapping
-   - Ratings and earnings tracking
-   - Identity verification
+⚡ Electrician · 🚰 Plumber · 🚗 Mechanic · 🧱 Builder · 💈 Barber · and more
 
-3. **Admin Controls**
-   - Lead review and management
-   - Provider approval workflow
-   - Incident tracking
-   - Payment reconciliation
-   - Detailed reporting
+## Data model (target)
 
-### Service Categories
+Carried over conceptually from the current schema, moving to Postgres with a unified `users` table:
 
-- ⚡ Electrician
-- 🚰 Plumber
-- 🚗 Mechanic
-- 🧱 Builder
-- 💈 Barber
-- And more...
+- **users** — id, name, email, password_hash, role (customer / professional / admin), google_id, profile_picture, created_at, updated_at
+- **customers** — id, user_id, phone, location
+- **professionals** — id, user_id, service_type, verified, rating, total_jobs, coverage_area
+- **service_requests** — id, customer_id, professional_id (nullable), service_type, description, location, urgency, status, created_at
+- **contact_submissions** — landing-page leads
 
-## Installation
-
-### Requirements
-
-- PHP 7.4 or higher
-- Web server (Apache/Nginx)
-- HTTPS certificate (production)
-
-### Setup
-
-1. Clone the repository
-```bash
-git clone https://github.com/Silabs-Co-Technologies-Ltd/QuickFix.git
-cd QuickFix
-```
-
-2. Configure your web server to serve the directory
-
-3. Create the database and load the Version 2.0 schema
-```bash
-mysql -u <user> -p quickfix_db < db.sql
-```
-
-4. Set environment variables
-```bash
-export APP_ENV=production
-```
-
-5. Ensure `sessions` directory is writable for PHP sessions
-
-## Deployment
-
-### Local Development
-
-```bash
-php -S localhost:8000
-```
-
-Visit `http://localhost:8000` in your browser.
-
-### Production Deployment
-
-1. **Environment Configuration**
-   - Set `APP_ENV=production`
-   - Disable error display: `display_errors = 0`
-   - Enable error logging to file
-
-2. **Security Headers**
-   - HTTPS enforced (included in code)
-   - CSP headers configured
-   - XSS protection enabled
-   - Clickjacking protection via X-Frame-Options
-
-3. **Database Integration**
-   - Import `db.sql` into MySQL/MariaDB
-   - Configure `DB_HOST`, `DB_USER`, `DB_PASS`, and `DB_NAME`
-   - Use the included tables for users, customers, professionals, service requests, contact submissions, and remember tokens
-
-4. **Email Configuration**
-   - Configure SMTP for form submissions
-   - Uncomment mail() function in index.php
-   - Set admin email address
-
-## File Structure
+## Proposed project structure
 
 ```
 QuickFix/
-├── index.php              # Main landing page (PHP)
-├── index.html             # Static HTML version
-├── db.sql                 # Version 2.0 MySQL/MariaDB schema
-├── manifest.webmanifest   # PWA manifest
-├── sw.js                  # Service Worker
-├── logo.png              # Brand logo
-└── README.md             # This file
+├── app/
+│   ├── __init__.py        # Flask app factory
+│   ├── models.py          # SQLAlchemy models
+│   ├── routes/             # Blueprints: auth, booking, admin, api
+│   ├── templates/          # Jinja2 templates
+│   └── static/              # CSS/JS, manifest.webmanifest, sw.js
+├── migrations/               # Flask-Migrate / Alembic
+├── requirements.txt
+├── vercel.json
+├── .env.example
+├── TODO.md
+└── README.md
 ```
 
-## Security Features
+## Getting started
 
-- CSRF token protection on forms
-- Input sanitization and validation
-- Secure headers (CSP, X-Frame-Options, etc.)
-- Session management with secure tokens
-- Error handling without exposing system details
-- SQL injection prevention ready
+### Requirements
 
-## Accessibility
+- Python 3.11+
+- A [Neon](https://neon.tech) Postgres database
+- A Cloudinary account (cloud name, API key/secret)
+- A Hugging Face account + API token
+- A Vercel account (for deployment)
 
-- WCAG 2.1 Level AA compliant
-- Keyboard navigation support
-- Focus indicators on interactive elements
-- ARIA labels for screen readers
-- Reduced motion support
-- Color contrast ratios > 4.5:1
+### Local setup
 
-## Browser Support
+```bash
+git clone https://github.com/Silabs-Co-Technologies-Ltd/QuickFix.git
+cd QuickFix
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Mobile browsers (iOS Safari, Chrome Mobile)
+Create a `.env` file locally (never commit this — it should stay in `.gitignore`):
 
-## Color Scheme
+```env
+FLASK_ENV=development
+SECRET_KEY=change-me
 
-- **Deep Blue**: `#003d82`
-- **Bright Green**: `#00b896`
-- **Light Blue**: `#e8f4f8`
-- **Dark Blue**: `#001f41`
+# Neon Postgres
+DATABASE_URL=postgresql://user:password@ep-xxxx.neon.tech/quickfix?sslmode=require
 
-## Performance
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
-- Optimized TailwindCSS (CDN)
-- Service Worker caching strategy
-- Responsive images
-- Minimal JavaScript
-- Fast LCP, FID, CLS metrics
+# Hugging Face
+HUGGINGFACE_API_TOKEN=
 
-## Development
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URL=http://localhost:5000/google-callback
 
-### Adding New Features
+MAIL_FROM=noreply@quickfix.ng
+MAIL_ADMIN=admin@quickfix.ng
+```
 
-1. Update HTML structure in `index.php`
-2. Add TailwindCSS classes (no additional CSS needed)
-3. Add PHP logic as needed
-4. Test with both desktop and mobile browsers
+Run migrations and start the dev server:
 
-### Testing Form Submission
+```bash
+flask db upgrade
+flask run
+```
 
-The contact form is configured for local testing. In production:
+Visit `http://localhost:5000`.
 
-1. Configure your email service
-2. Update the `mail()` function with admin email
-3. Implement database storage if needed
+## Deployment (Vercel)
 
-## Future Enhancements
+1. Push to GitHub and import the repo into Vercel.
+2. Add the same environment variables from `.env` in the Vercel project settings (Production **and** Preview).
+3. Add a `vercel.json` that routes requests to the Flask WSGI app.
+4. Deploy — Vercel builds the Python serverless function automatically.
 
-- [x] Version 2.0 database schema for users, customers, providers, bookings, contacts, and remember tokens
-- [ ] User authentication system
-- [ ] Payment gateway integration
-- [ ] Real-time notifications
-- [ ] Mobile app (React Native)
-- [ ] Multi-language support
-- [ ] Analytics dashboard
+## Security
+
+- No secrets in code — every credential above is read from an environment variable, with no hardcoded fallback value
+- Passwords hashed, never stored in plain text
+- CSRF protection on all forms (Flask-WTF)
+- Security headers: CSP, X-Frame-Options, X-Content-Type-Options
 
 ## Support
 
-For issues, feature requests, or questions:
 - GitHub Issues: [Project Issues](https://github.com/Silabs-Co-Technologies-Ltd/QuickFix/issues)
 - Email: support@quickfix.ng
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Credits
-
-Built with ❤️ for Nigeria 🇳🇬
-
-**Founder**: Nicazz Ishor
+MIT License — see LICENSE file for details.
 
 ---
 
-**Last Updated**: June 2026
-**Version**: 2.0.0
-**Status**: Production Ready
+**Founder:** Nicazz Ishor
+**Built with ❤️ for Nigeria 🇳🇬**

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickFix Nearby — Vetted tradespeople, on demand</title>
+<meta name="description" content="QuickFix Nearby connects you to vetted electricians, plumbers, mechanics, builders and barbers near you. Book in minutes, tracked door to door.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161A1D;
+    --paper:#EEF0E9;
+    --paper-raised:#F8F9F4;
+    --green:#1F6E43;
+    --green-deep:#164F31;
+    --amber:#F2A93B;
+    --amber-deep:#C9821E;
+    --brick:#B23A2E;
+    --line:#CBCFC3;
+    --muted:#5B6660;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Barlow', sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3,.display{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    line-height:0.98;
+    letter-spacing:0.2px;
+    margin:0;
+  }
+
+  a{color:inherit;}
+  img,svg{display:block;}
+
+  :focus-visible{
+    outline:3px solid var(--amber-deep);
+    outline-offset:2px;
+  }
+
+  .wrap{
+    max-width:1140px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- nav ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(238,240,233,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 24px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    text-decoration:none;
+    color:var(--ink);
+  }
+  .brand-mark{
+    width:30px;height:30px;flex:none;
+  }
+  .nav-links{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    font-size:15px;
+    font-weight:500;
+  }
+  .nav-links a{ text-decoration:none; }
+  .nav-links a:not(.btn):hover{ color:var(--green-deep); }
+  .nav-cta{ display:flex; gap:10px; }
+
+  @media (max-width: 760px){
+    .nav-links a:not(.btn){ display:none; }
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:12px 22px;
+    font-family:'Barlow', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    text-decoration:none;
+    border-radius:4px;
+    border:2px solid transparent;
+    cursor:pointer;
+    transition:background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-primary{
+    background:var(--amber);
+    color:var(--ink);
+  }
+  .btn-primary:hover{ background:var(--amber-deep); }
+  .btn-ghost{
+    background:transparent;
+    border-color:var(--ink);
+    color:var(--ink);
+  }
+  .btn-ghost:hover{ background:var(--ink); color:var(--paper); }
+  .btn-light{
+    background:var(--paper-raised);
+    border-color:var(--paper-raised);
+    color:var(--ink);
+  }
+  .btn-light:hover{ background:var(--paper); border-color:var(--ink); }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:72px 0 64px;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:56px;
+    align-items:center;
+  }
+  .eyebrow-line{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--green-deep);
+    font-weight:600;
+    font-size:15px;
+    margin-bottom:18px;
+  }
+  .eyebrow-line svg{ flex:none; }
+  .hero h1{
+    font-size:clamp(40px, 6vw, 68px);
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--green-deep);
+  }
+  .hero p.lede{
+    margin:22px 0 30px;
+    max-width:46ch;
+    font-size:19px;
+    color:var(--muted);
+  }
+  .hero-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:40px;
+  }
+  .stats{
+    display:flex;
+    gap:36px;
+    flex-wrap:wrap;
+    border-top:1px solid var(--line);
+    padding-top:22px;
+  }
+  .stat b{
+    display:block;
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size:30px;
+    color:var(--green-deep);
+  }
+  .stat span{
+    font-size:14px;
+    color:var(--muted);
+  }
+
+  /* ---------- ticket card ---------- */
+  .ticket{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 24px 48px -28px rgba(22,26,29,0.35);
+    overflow:hidden;
+    max-width:380px;
+    margin-left:auto;
+  }
+  .ticket-head{
+    background:var(--ink);
+    color:var(--paper);
+    padding:16px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'Barlow Condensed', sans-serif;
+    font-size:17px;
+    font-weight:700;
+  }
+  .ticket-head span{
+    font-family:'Barlow', sans-serif;
+    font-weight:500;
+    font-size:12px;
+    color:#B9C2BA;
+  }
+  .ticket-perf{
+    position:relative;
+    height:0;
+    border-top:2px dashed var(--line);
+    margin:0 20px;
+  }
+  .ticket-perf::before,.ticket-perf::after{
+    content:"";
+    position:absolute;
+    top:-9px;
+    width:18px;height:18px;
+    background:var(--paper);
+    border-radius:50%;
+  }
+  .ticket-perf::before{ left:-29px; }
+  .ticket-perf::after{ right:-29px; }
+  .ticket-body{ padding:22px 20px 24px; }
+  .ticket-row{
+    display:flex;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14.5px;
+  }
+  .ticket-row:last-of-type{ border-bottom:none; }
+  .ticket-row .k{ color:var(--muted); }
+  .ticket-row .v{ font-weight:600; text-align:right; }
+  .ticket-status{
+    margin-top:16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#E7F1EA;
+    border:1px solid #C7DECB;
+    color:var(--green-deep);
+    font-weight:600;
+    font-size:14px;
+    border-radius:6px;
+    padding:10px 14px;
+  }
+  .pulse-dot{
+    width:9px;height:9px;
+    border-radius:50%;
+    background:var(--green);
+    flex:none;
+    animation:pulse-once 1.8s ease-out 1;
+  }
+  @keyframes pulse-once{
+    0%{ box-shadow:0 0 0 0 rgba(31,110,67,0.5); }
+    70%{ box-shadow:0 0 0 10px rgba(31,110,67,0); }
+    100%{ box-shadow:0 0 0 0 rgba(31,110,67,0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pulse-dot{ animation:none; }
+    html{ scroll-behavior:auto; }
+  }
+
+  @media (max-width:900px){
+    .hero-grid{ grid-template-columns:1fr; }
+    .ticket{ margin-left:0; max-width:420px; }
+  }
+
+  /* ---------- section shells ---------- */
+  section{ padding:64px 0; }
+  .section-head{
+    max-width:60ch;
+    margin-bottom:40px;
+  }
+  .section-head h2{
+    font-size:clamp(30px,4vw,42px);
+  }
+  .section-head p{
+    margin-top:12px;
+    color:var(--muted);
+    font-size:17px;
+  }
+
+  /* ---------- services ---------- */
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .service-card{
+    background:var(--paper-raised);
+    padding:28px 24px;
+  }
+  .service-icon{
+    width:34px;height:34px;
+    color:var(--green-deep);
+    margin-bottom:16px;
+  }
+  .service-card h3{
+    font-size:22px;
+    margin-bottom:6px;
+  }
+  .service-card p{
+    margin:0;
+    color:var(--muted);
+    font-size:14.5px;
+  }
+  .service-card.more{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .service-card.more p{ color:#B9C2BA; }
+
+  @media (max-width:820px){
+    .services-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:560px){
+    .services-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- how it works ---------- */
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:32px;
+  }
+  .step .num{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    color:var(--amber-deep);
+    border:1.5px solid var(--amber-deep);
+    width:34px;height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:16px;
+  }
+  .step h3{
+    font-size:22px;
+    margin-bottom:8px;
+  }
+  .step p{ margin:0; color:var(--muted); }
+
+  @media (max-width:820px){
+    .steps{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- trust ---------- */
+  .trust{
+    background:var(--paper-raised);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .trust-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:48px;
+    align-items:start;
+  }
+  .trust-list{
+    list-style:none;
+    margin:0;padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .trust-list li{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    font-size:16px;
+  }
+  .trust-list svg{
+    flex:none;
+    width:22px;height:22px;
+    color:var(--green-deep);
+    margin-top:2px;
+  }
+  .quote-ticket{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:26px 28px;
+    position:relative;
+  }
+  .quote-ticket p.q{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:600;
+    font-size:23px;
+    line-height:1.25;
+    margin:0 0 16px;
+  }
+  .quote-ticket .attrib{
+    font-size:14px;
+    color:var(--muted);
+    font-weight:500;
+  }
+
+  @media (max-width:820px){
+    .trust-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- dual CTA ---------- */
+  .dual{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .dual-panel{
+    padding:44px 36px;
+  }
+  .dual-panel.customer{ background:var(--green-deep); color:#EAF2EC; }
+  .dual-panel.pro{ background:var(--ink); color:var(--paper); }
+  .dual-panel h3{
+    font-size:30px;
+    margin-bottom:10px;
+  }
+  .dual-panel p{
+    color:rgba(255,255,255,0.75);
+    max-width:36ch;
+    margin:0 0 24px;
+  }
+
+  @media (max-width:760px){
+    .dual{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    background:var(--ink);
+    color:#B9C2BA;
+    padding:52px 0 28px;
+  }
+  .foot-grid{
+    display:grid;
+    grid-template-columns:1.4fr repeat(3,1fr);
+    gap:32px;
+    padding-bottom:36px;
+    border-bottom:1px solid #2A2F33;
+  }
+  .foot-brand{
+    color:var(--paper);
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    margin-bottom:10px;
+  }
+  .foot-grid p{ max-width:32ch; font-size:14.5px; }
+  .foot-grid h4{
+    color:var(--paper);
+    font-family:'Barlow', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:14px;
+  }
+  .foot-grid ul{
+    list-style:none;
+    margin:0;padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    font-size:14.5px;
+  }
+  .foot-grid a{ text-decoration:none; }
+  .foot-grid a:hover{ color:var(--paper); }
+  .foot-bottom{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    padding-top:24px;
+    font-size:13.5px;
+  }
+
+  @media (max-width:760px){
+    .foot-grid{ grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav wrap">
+    <a href="#top" class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="7" fill="#1F6E43"/>
+        <path d="M18.5 6L10 18h5.5L13 26l8.5-12H16l2.5-8z" fill="#F2A93B"/>
+      </svg>
+      QuickFix Nearby
+    </a>
+    <div class="nav-links">
+      <a href="#services">Services</a>
+      <a href="#how">How it works</a>
+      <a href="#pros">For pros</a>
+      <div class="nav-cta">
+        <a href="#request" class="btn btn-primary">Book a pro</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow-line">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v6c0 5.2 3.8 9.6 10 11 6.2-1.4 10-5.8 10-11V7l-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          Verified tradespeople across Nigeria
+        </div>
+        <h1>Something's broken.<br>We'll send <em>someone.</em></h1>
+        <p class="lede">QuickFix Nearby matches you with a vetted electrician, plumber, mechanic, builder or barber close by — booked in minutes, tracked until the job's done.</p>
+        <div class="hero-actions">
+          <a href="#request" class="btn btn-primary">Request a service</a>
+          <a href="#how" class="btn btn-ghost">See how it works</a>
+        </div>
+        <!-- Placeholder metrics — replace with real numbers before launch -->
+        <div class="stats">
+          <div class="stat"><b>1,200+</b><span>Verified pros</span></div>
+          <div class="stat"><b>18 min</b><span>Average response</span></div>
+          <div class="stat"><b>6 cities</b><span>Covered so far</span></div>
+        </div>
+      </div>
+
+      <div class="ticket">
+        <div class="ticket-head">
+          Service Request <span>#Q-0417</span>
+        </div>
+        <div class="ticket-perf"></div>
+        <div class="ticket-body">
+          <div class="ticket-row"><span class="k">Category</span><span class="v">Electrician</span></div>
+          <div class="ticket-row"><span class="k">Location</span><span class="v">Wuse II, Abuja</span></div>
+          <div class="ticket-row"><span class="k">Urgency</span><span class="v">Today</span></div>
+          <div class="ticket-status">
+            <span class="pulse-dot"></span>
+            Pro on the way — ETA 12 min
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SERVICES ================= -->
+  <section id="services">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Whatever needs fixing</h2>
+        <p>Five categories live today. Every pro on the platform is ID-checked before their first job.</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card">
+          <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke-linejoin="round"/></svg>
+          <h3>Electrician</h3>
+          <p>Wiring, outlets, fittings, and anything that trips the breaker.</p>
+        </div>
+        <div class="service-card">
+          <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2c3 3.5 6 7.2 6 10.5a6 6 0 1 1-12 0C6 9.2 9 5.5 12 2z" stroke-linejoin="round"/></svg>
+          <h3>Plumber</h3>
+          <p>Leaks, blockages, installs — before the small drip becomes a flood.</p>
+        </div>
+        <div class="service-card">
+          <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/><path d="M4 17.5H2v-4l2-5h11l3 5h2v4h-2M9 8.5h5" stroke-linejoin="round"/></svg>
+          <h3>Mechanic</h3>
+          <p>Roadside jump-starts to full diagnostics, wherever the car stalled.</p>
+        </div>
+        <div class="service-card">
+          <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6" stroke-linejoin="round"/></svg>
+          <h3>Builder</h3>
+          <p>Repairs, renovations and small builds handled by a licensed crew.</p>
+        </div>
+        <div class="service-card">
+          <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.5 8.5L19 19M19 5L8.5 15.5" stroke-linecap="round"/></svg>
+          <h3>Barber</h3>
+          <p>A sharp cut at home, on your schedule, from a rated stylist.</p>
+        </div>
+        <div class="service-card more">
+          <h3>More trades soon</h3>
+          <p>Cleaners, painters and appliance repair are next on the roadmap.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>From "it's broken" to "it's done"</h2>
+        <p>Three steps, start to finish — no phone calls to five different people.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">01</div>
+          <h3>Describe the job</h3>
+          <p>Pick a category, add a few details, share your location and how urgent it is.</p>
+        </div>
+        <div class="step">
+          <div class="num">02</div>
+          <h3>Get matched nearby</h3>
+          <p>We route it to a verified, available pro in your area — you see their rating before you confirm.</p>
+        </div>
+        <div class="step">
+          <div class="num">03</div>
+          <h3>Track it to done</h3>
+          <p>Watch status live, pay securely in the app, and rate the job when it's finished.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRUST ================= -->
+  <section class="trust">
+    <div class="wrap trust-grid">
+      <div>
+        <div class="section-head" style="margin-bottom:24px;">
+          <h2>Built so you're not gambling on a stranger</h2>
+        </div>
+        <ul class="trust-list">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Every professional is identity-verified before their first booking.
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.6 5.6 6 .7-4.5 4.2 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7L12 3z" stroke-linejoin="round"/></svg>
+            Ratings come only from completed, paid jobs — no fake reviews.
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+            Payment happens in-app, so there's no cash-only surprise at the door.
+          </li>
+        </ul>
+      </div>
+      <!-- Placeholder testimonial — swap for a real customer quote before launch -->
+      <div class="quote-ticket">
+        <p class="q">"Called at 8pm on a Sunday. A plumber was at my gate before 9."</p>
+        <div class="attrib">Amaka O. — Wuse II, Abuja</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DUAL CTA ================= -->
+  <div class="dual">
+    <div class="dual-panel customer" id="request">
+      <h3>Need something fixed today?</h3>
+      <p>Tell us what's wrong and we'll get a vetted pro on the way.</p>
+      <a href="#" class="btn btn-light">Request a service</a>
+    </div>
+    <div class="dual-panel pro" id="pros">
+      <h3>Good with your hands?</h3>
+      <p>Join as a verified pro and start picking up jobs near you.</p>
+      <a href="#" class="btn btn-primary">Apply as a pro</a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">QuickFix Nearby</div>
+        <p>A marketplace connecting customers with verified, on-demand service professionals across Nigeria.</p>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#services">Electrician</a></li>
+          <li><a href="#services">Plumber</a></li>
+          <li><a href="#services">Mechanic</a></li>
+          <li><a href="#services">Builder</a></li>
+          <li><a href="#services">Barber</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#pros">Become a pro</a></li>
+          <li><a href="mailto:support@quickfix.ng">Support</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Privacy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>&copy; 2026 QuickFix Nearby. All rights reserved.</span>
+      <span>Built for Nigeria.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

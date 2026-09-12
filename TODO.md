@@ -61,6 +61,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Input validation on every form and API route
 
 ## Phase 10 — Deployment
+- [x] Fixed a crash-on-every-request bug: `create_app()` was unconditionally calling `os.makedirs()` for the SQLite fallback, even when `DATABASE_URL` was set — Vercel's serverless filesystem is read-only outside `/tmp`, so this crashed the function on every invocation. Now it only touches the filesystem when actually falling back to SQLite, and fails with a clear message (not a cryptic OSError) if `DATABASE_URL` is missing on Vercel.
 - [ ] Provision a real Neon project, put its connection string in `DATABASE_URL` (locally and in Vercel's env vars), then run `flask db upgrade` against it once from a machine that can reach it
 - [ ] Vercel project + env vars set (Production and Preview)
 - [ ] Confirm `vercel.json` routing works against a real deploy (static assets)

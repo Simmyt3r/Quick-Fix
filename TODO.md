@@ -22,7 +22,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
 - [ ] Google OAuth flow
 - [x] Session management (Flask-Login)
-- [ ] CSRF protection on every form (Flask-WTF) — including `/leads`, `/login`, `/register`
+- [x] CSRF protection on every form (Flask-WTF) — `/leads`, `/login`, `/register` all require a valid token; failures flash a friendly message and redirect
 - [ ] Password reset flow
 - [x] Open-redirect protection on the post-login `next` param
 
@@ -56,15 +56,15 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Hugging Face integration — e.g. auto-categorizing free-text job descriptions
 
 ## Phase 9 — Security & hardening
-- [ ] Security headers: CSP, X-Frame-Options, X-Content-Type-Options
-- [ ] Rate limiting on auth endpoints and `/leads`
-- [ ] CSRF protection (see Phase 3)
+- [x] Security headers: CSP (no `unsafe-inline`), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS (HTTPS only)
+- [x] Rate limiting on `/login` (10/min), `/register` (5/hr), `/leads` (10/hr) via Flask-Limiter — **in-memory storage only, resets per process; not safe for multiple serverless instances (see Phase 10)**
 - [ ] Input validation on every form and API route
 
 ## Phase 10 — Deployment
 - [ ] Provision a real Neon project, put its connection string in `DATABASE_URL` (locally and in Vercel's env vars), then run `flask db upgrade` against it once from a machine that can reach it
 - [ ] Vercel project + env vars set (Production and Preview)
 - [ ] Confirm `vercel.json` routing works against a real deploy (static assets)
+- [ ] Replace Flask-Limiter's in-memory storage with a shared backend (e.g. Upstash Redis) before relying on rate limits in production — each serverless instance currently tracks its own counters
 - [ ] Decide how migrations run in production (Vercel serverless functions shouldn't run `flask db upgrade` on cold start — run it manually or from CI before each deploy)
 - [ ] Post-deploy smoke test
 - [ ] Basic monitoring / error tracking

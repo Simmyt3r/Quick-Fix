@@ -4,14 +4,14 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page, lead capture, email/password auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate. Booking/service-requests, OAuth, and CSRF protection are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, and security headers in place. Booking/service-requests and OAuth are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
 - **24/7 service booking** — customers request services anytime, specifying category, location, and urgency
 - **Verified professionals** — pre-vetted providers with ratings, coverage areas, and identity verification
 - **Live dashboard** — booking/service-request tracking for customers, professionals, and admins
-- **Secure by default** — hashed credentials, CSRF protection, audit-friendly data model
+- **Secure by default** — hashed credentials, CSRF-protected forms, rate-limited auth/lead endpoints, and a strict CSP
 
 ## Tech stack
 
@@ -77,9 +77,11 @@ Quick-Fix/
 │   └── index.py             # Vercel WSGI entrypoint
 ├── app/
 │   ├── __init__.py           # Flask app factory
-│   ├── extensions.py         # db, login_manager, migrate
+│   ├── extensions.py         # db, login_manager, migrate, csrf, limiter
 │   ├── models.py             # User, ContactSubmission
 │   ├── cli.py                # `flask create-admin`
+│   ├── security.py           # response security headers (CSP, etc.)
+│   ├── errors.py             # CSRF/rate-limit error handlers
 │   ├── routes/
 │   │   ├── main.py           # "/", "/healthz", "/leads"
 │   │   ├── auth.py           # "/register", "/login", "/logout"
@@ -144,8 +146,9 @@ flask create-admin you@example.com yourpassword
 
 - No secrets in code — every credential is read from an environment variable, no hardcoded fallback values
 - Passwords are hashed with Werkzeug, never stored in plain text — live
-- CSRF protection planned on all forms, including `/leads`, `/login`, and `/register` (Flask-WTF)
-- Security headers (CSP, X-Frame-Options, X-Content-Type-Options) planned before launch
+- CSRF protection on every form (`/leads`, `/login`, `/register`) via Flask-WTF — live
+- Rate limiting via Flask-Limiter — `/login` (10/min), `/register` (5/hr), `/leads` (10/hr) — live, but uses in-memory storage, so limits are per-process and won't hold across multiple serverless instances until a shared backend (e.g. Upstash Redis) is added
+- Security headers on every response — CSP (no `unsafe-inline`), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and HSTS over HTTPS — live
 
 ## Support
 

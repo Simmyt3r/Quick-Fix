@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from app.extensions import db, login_manager, migrate
+from app.extensions import csrf, db, limiter, login_manager, migrate
 
 
 def create_app():
@@ -25,6 +25,9 @@ def create_app():
     login_manager.login_message = "Please log in to view that page."
     login_manager.login_message_category = "error"
 
+    csrf.init_app(app)
+    limiter.init_app(app)
+
     from app import models  # noqa: F401 — register models before Migrate/db touch anything
 
     migrate.init_app(app, db)
@@ -40,5 +43,11 @@ def create_app():
     from app.cli import create_admin
 
     app.cli.add_command(create_admin)
+
+    from app.security import register_security_headers
+    from app.errors import register_error_handlers
+
+    register_security_headers(app)
+    register_error_handlers(app)
 
     return app

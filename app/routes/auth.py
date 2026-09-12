@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import User
 
 auth_bp = Blueprint("auth", __name__)
@@ -22,6 +22,7 @@ def _safe_next(target):
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.home"))
@@ -62,6 +63,7 @@ def register():
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.home"))

@@ -675,3 +675,7 @@ footer{
   padding:9px 10px;
   border-bottom:1px solid var(--line);
 }
+
+/* ---------- small utilities (kept out of inline attrs for a clean CSP) ---------- */
+.trust-head{ margin-bottom:24px; }
+.mt-20{ margin-top:20px; }

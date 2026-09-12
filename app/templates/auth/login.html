@@ -6,6 +6,7 @@
     <h1>Welcome back</h1>
     <p class="auth-sub">Log in to manage your requests or jobs.</p>
     <form method="POST" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Email
         <input type="email" name="email" required autofocus value="{{ request.form.get('email', '') }}">
       </label>

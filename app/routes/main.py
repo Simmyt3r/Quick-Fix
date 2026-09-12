@@ -1,6 +1,6 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import ContactSubmission
 
 main_bp = Blueprint("main", __name__)
@@ -19,14 +19,13 @@ def healthz():
 
 
 @main_bp.route("/leads", methods=["POST"])
+@limiter.limit("10 per hour")
 def leads():
     """
     Capture a lead from the landing page's two call-to-action forms —
     a customer requesting a service, or a tradesperson applying to join.
     A matching professional will see customer leads under "Leads near
     your trade" on their dashboard.
-
-    TODO(phase 9): add CSRF protection (Flask-WTF) to this public form.
     """
     role = request.form.get("role", "customer")
     if role not in ("customer", "professional"):

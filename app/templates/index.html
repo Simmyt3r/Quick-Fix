@@ -159,7 +159,7 @@
   <section class="trust">
     <div class="wrap trust-grid">
       <div>
-        <div class="section-head" style="margin-bottom:24px;">
+        <div class="section-head trust-head">
           <h2>Built so you're not gambling on a stranger</h2>
         </div>
         <ul class="trust-list">
@@ -191,6 +191,7 @@
       <h3>Need something fixed today?</h3>
       <p>Tell us what's wrong and we'll get a vetted pro on the way.</p>
       <form class="lead-form" action="{{ url_for('main.leads') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="role" value="customer">
         <input type="text" name="name" placeholder="Your name" required>
         <input type="tel" name="phone" placeholder="Phone number" required>
@@ -209,6 +210,7 @@
       <h3>Good with your hands?</h3>
       <p>Join as a verified pro and start picking up jobs near you.</p>
       <form class="lead-form" action="{{ url_for('main.leads') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="role" value="professional">
         <input type="text" name="name" placeholder="Your name" required>
         <input type="tel" name="phone" placeholder="Phone number" required>

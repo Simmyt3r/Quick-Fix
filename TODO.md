@@ -49,6 +49,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 ## Phase 7 — Frontend
 - [x] Marketing landing page (`app/templates/index.html`), served via Flask (`GET /`)
 - [x] Auth pages (`/login`, `/register`) and role-aware dashboard (`/dashboard`)
+- [x] Applied the blue/green/white brand palette to `app/static/css/style.css` (screenshot-tested at desktop + mobile widths; fixed a blue-on-blue button and a flex-gap fallback along the way)
 - [ ] Move `app/static/css/style.css` into a Tailwind build pipeline (currently hand-rolled CSS for the MVP)
 - [ ] PWA manifest + service worker
 

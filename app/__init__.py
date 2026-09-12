@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from app.extensions import db, login_manager
+from app.extensions import db, login_manager, migrate
 
 
 def create_app():
@@ -12,7 +12,11 @@ def create_app():
 
     os.makedirs(app.instance_path, exist_ok=True)
     default_db_uri = "sqlite:///" + os.path.join(app.instance_path, "quickfix.db")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", default_db_uri)
+    db_url = os.environ.get("DATABASE_URL", default_db_uri)
+    # Some providers (Heroku-style) hand out "postgres://"; SQLAlchemy/psycopg2 need "postgresql://".
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
@@ -20,6 +24,10 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Please log in to view that page."
     login_manager.login_message_category = "error"
+
+    from app import models  # noqa: F401 — register models before Migrate/db touch anything
+
+    migrate.init_app(app, db)
 
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
@@ -32,12 +40,5 @@ def create_app():
     from app.cli import create_admin
 
     app.cli.add_command(create_admin)
-
-    with app.app_context():
-        from app import models  # noqa: F401 — register models before create_all
-
-        # TODO(phase 1): replace with Flask-Migrate/Alembic before this ever
-        # touches a real Postgres database — create_all() is dev-only.
-        db.create_all()
 
     return app

@@ -4,9 +4,9 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 
 ## Phase 1 — Foundation
 - [x] Flask app factory (`app/__init__.py`)
-- [x] SQLAlchemy wired up — SQLite by default (`instance/quickfix.db`), swaps to Neon Postgres automatically when `DATABASE_URL` is set
-- [ ] Verify against a real Neon Postgres database (only tested against SQLite so far)
-- [ ] Flask-Migrate / Alembic wired up — `db.create_all()` is a dev-only stopgap right now
+- [x] SQLAlchemy wired up — SQLite by default (`instance/quickfix.db`), swaps to Postgres automatically when `DATABASE_URL` is set (normalizes `postgres://` → `postgresql://`)
+- [x] Flask-Migrate / Alembic wired up — `migrations/` is committed; run `flask db upgrade` to create/update schema (replaces the old `db.create_all()` dev stopgap)
+- [x] Verified migrations against a real local Postgres 16 instance (tables created, full auth/dashboard smoke test passed) — **not yet verified against actual Neon**, since that needs your real connection string
 - [x] `requirements.txt`
 - [x] `.env.example` (no real secrets, ever)
 - [x] `vercel.json` routing requests to the Flask WSGI app — scaffolded, not yet verified against a real deploy
@@ -16,7 +16,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Split professional-only fields (`service_category`, `verified`) into a dedicated `professionals` table with coverage_area, rating, total_jobs, etc., per README's data model
 - [ ] `customers` — id, user_id, phone, location
 - [ ] `service_requests` — id, customer_id, professional_id, service_type, description, location, urgency, status, created_at
-- [x] `contact_submissions` — landing-page leads, now persisted via `/leads` and surfaced on professional/admin dashboards
+- [x] `contact_submissions` — landing-page leads, persisted via `/leads` and surfaced on professional/admin dashboards
 
 ## Phase 3 — Auth
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
@@ -62,14 +62,15 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Input validation on every form and API route
 
 ## Phase 10 — Deployment
+- [ ] Provision a real Neon project, put its connection string in `DATABASE_URL` (locally and in Vercel's env vars), then run `flask db upgrade` against it once from a machine that can reach it
 - [ ] Vercel project + env vars set (Production and Preview)
-- [ ] Confirm `vercel.json` routing works against a real deploy (static assets + SQLite won't persist on serverless — Postgres is required before deploying)
-- [ ] Production Neon database provisioned
+- [ ] Confirm `vercel.json` routing works against a real deploy (static assets)
+- [ ] Decide how migrations run in production (Vercel serverless functions shouldn't run `flask db upgrade` on cold start — run it manually or from CI before each deploy)
 - [ ] Post-deploy smoke test
 - [ ] Basic monitoring / error tracking
 
 ## Housekeeping
-- [x] Add `app/static/logo.png` — uploaded and wired into nav, footer, and favicon
+- [x] `app/static/logo.png` — uploaded and wired into nav, footer, and favicon
 - [ ] Replace placeholder stats and testimonial on the landing page with real numbers before launch
 - [ ] Add `LICENSE` file (README references MIT)
 - [ ] Rotate any credentials that were ever pasted outside `.env`

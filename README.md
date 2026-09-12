@@ -4,7 +4,7 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page and lead capture are live; booking, auth, and the professional/admin dashboards are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate. Booking/service-requests, OAuth, and CSRF protection are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
@@ -19,10 +19,10 @@ A marketplace platform connecting customers with verified, on-demand service pro
 |---|---|
 | Backend | Python, Flask |
 | Hosting / deploy | Vercel (serverless functions) |
-| Database | Neon (serverless Postgres) — not yet connected |
+| Database | Postgres (Neon-ready) via SQLAlchemy + Flask-Migrate — schema-managed, not yet pointed at a real Neon project |
 | Media storage | Cloudinary — not yet integrated |
 | AI / ML | Hugging Face Inference API — not yet integrated |
-| Auth | Flask sessions + Google OAuth — not yet built |
+| Auth | Flask-Login (email/password, hashed) — live; Google OAuth not yet built |
 | Frontend | HTML5, hand-rolled CSS (Tailwind migration planned) |
 
 ## Core features (planned)
@@ -57,35 +57,48 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 **UX direction:** mobile-first, rounded cards, soft shadows, large touch targets, map-centric discovery ("Find & Fix It Fast"), verification badges, real professional photography. Primary flow: **Search → Find nearby pro → View profile → Book → Pay → Track → Rate.**
 
-## Data model (target)
+## Data model
 
-Not yet implemented (Phase 2) — planned as a unified `users` table plus role tables:
+Implemented so far (Phase 2 in progress) — a unified `users` table plus a separate leads table; role-specific tables below are still planned:
 
-- **users** — id, name, email, password_hash, role (customer / professional / admin), google_id, profile_picture, created_at, updated_at
-- **customers** — id, user_id, phone, location
-- **professionals** — id, user_id, service_type, verified, rating, total_jobs, coverage_area
-- **service_requests** — id, customer_id, professional_id (nullable), service_type, description, location, urgency, status, created_at
-- **contact_submissions** — landing-page leads (currently just logged to stdout by `/leads`, not persisted)
+- **users** *(live)* — id, name, email, password_hash, role (customer / professional / admin), service_category, verified, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
+- **contact_submissions** *(live)* — landing-page leads from `/leads`, shown on professional dashboards (filtered by category) and the admin dashboard (all leads)
+- **customers** *(planned)* — id, user_id, phone, location
+- **professionals** *(planned)* — id, user_id, service_type, verified, rating, total_jobs, coverage_area — will absorb `service_category`/`verified` off of `users`
+- **service_requests** *(planned)* — id, customer_id, professional_id (nullable), service_type, description, location, urgency, status, created_at
+
+Schema is managed by Flask-Migrate (Alembic) — see `migrations/`. Run `flask db upgrade` to apply.
 
 ## Project structure
 
 ```
 Quick-Fix/
 ├── api/
-│   └── index.py           # Vercel WSGI entrypoint
+│   └── index.py             # Vercel WSGI entrypoint
 ├── app/
-│   ├── __init__.py         # Flask app factory
+│   ├── __init__.py           # Flask app factory
+│   ├── extensions.py         # db, login_manager, migrate
+│   ├── models.py             # User, ContactSubmission
+│   ├── cli.py                # `flask create-admin`
 │   ├── routes/
-│   │   └── main.py         # "/", "/healthz", "/leads"
+│   │   ├── main.py           # "/", "/healthz", "/leads"
+│   │   ├── auth.py           # "/register", "/login", "/logout"
+│   │   └── dashboard.py      # "/dashboard" (role-aware)
 │   ├── static/
 │   │   ├── css/style.css
 │   │   └── logo.png
 │   └── templates/
-│       └── index.html      # Marketing landing page
+│       ├── index.html        # Marketing landing page
+│       ├── base_app.html     # Shared shell for auth/dashboard pages
+│       ├── _topbar.html
+│       ├── auth/
+│       └── dashboard/
+├── migrations/                # Flask-Migrate/Alembic — `flask db upgrade`
 ├── requirements.txt
 ├── vercel.json
 ├── .env.example
 ├── .gitignore
+├── run.py
 ├── README.md
 └── TODO.md
 ```
@@ -106,25 +119,32 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
+flask db upgrade   # creates the schema — SQLite by default, or Postgres if DATABASE_URL is set
 python run.py
 ```
 
-Visit `http://localhost:5000`.
+Visit `http://localhost:5000`. To try the admin dashboard, create an admin from the CLI:
 
-> `.env.example` already lists the Neon/Cloudinary/Hugging Face/Google variables ahead of time, but only `SECRET_KEY` and `FLASK_ENV` are actually read by the code today — the rest activate as each phase in `TODO.md` lands.
+```bash
+flask create-admin you@example.com yourpassword
+```
+
+> `.env.example` already lists the Cloudinary/Hugging Face/Google variables ahead of time, but only `SECRET_KEY`, `FLASK_ENV`, and `DATABASE_URL` are actually read by the code today — the rest activate as each phase in `TODO.md` lands.
 
 ## Deployment (Vercel)
 
-1. Push to GitHub and import the repo into Vercel.
-2. Add the environment variables from `.env` in the Vercel project settings (Production **and** Preview) as each becomes needed.
-3. `vercel.json` already routes all requests to `api/index.py` — confirm static assets under `app/static/` serve correctly on a real deploy (tracked in `TODO.md`).
-4. Deploy — Vercel builds the Python serverless function automatically.
+1. Provision a [Neon](https://neon.tech) project and copy its connection string into `DATABASE_URL`.
+2. Push to GitHub and import the repo into Vercel.
+3. Add the environment variables from `.env` in the Vercel project settings (Production **and** Preview) as each becomes needed.
+4. Run `flask db upgrade` against the production `DATABASE_URL` once, from a machine that can reach it — Vercel's serverless functions shouldn't run migrations on every cold start.
+5. `vercel.json` already routes all requests to `api/index.py` — confirm static assets under `app/static/` serve correctly on a real deploy (tracked in `TODO.md`).
+6. Deploy — Vercel builds the Python serverless function automatically.
 
 ## Security
 
 - No secrets in code — every credential is read from an environment variable, no hardcoded fallback values
-- Passwords will be hashed, never stored in plain text (once auth lands)
-- CSRF protection planned on all forms, including the public `/leads` form (Flask-WTF)
+- Passwords are hashed with Werkzeug, never stored in plain text — live
+- CSRF protection planned on all forms, including `/leads`, `/login`, and `/register` (Flask-WTF)
 - Security headers (CSP, X-Frame-Options, X-Content-Type-Options) planned before launch
 
 ## Support

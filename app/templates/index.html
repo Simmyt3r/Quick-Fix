@@ -23,6 +23,11 @@
       <a href="#services">Services</a>
       <a href="#how">How it works</a>
       <a href="#pros">For pros</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+      {% endif %}
       <div class="nav-cta">
         <a href="#request" class="btn btn-primary">Book a pro</a>
       </div>
@@ -204,7 +209,7 @@
       <h3>Good with your hands?</h3>
       <p>Join as a verified pro and start picking up jobs near you.</p>
       <form class="lead-form" action="{{ url_for('main.leads') }}" method="POST">
-        <input type="hidden" name="role" value="pro">
+        <input type="hidden" name="role" value="professional">
         <input type="text" name="name" placeholder="Your name" required>
         <input type="tel" name="phone" placeholder="Phone number" required>
         <select name="category">

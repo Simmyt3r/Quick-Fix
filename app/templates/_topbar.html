@@ -1,0 +1,18 @@
+<header>
+  <nav class="nav wrap">
+    <a href="{{ url_for('main.index') }}" class="brand">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="QuickFix Nearby" class="brand-mark">
+      QuickFix Nearby
+    </a>
+    <div class="nav-links">
+      {% if current_user.is_authenticated %}
+        <span class="nav-user">Hi, {{ current_user.name.split(' ')[0] }}</span>
+        <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost">Log out</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Sign up</a>
+      {% endif %}
+    </div>
+  </nav>
+</header>

@@ -1,0 +1,52 @@
+from datetime import datetime
+
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app.extensions import db, login_manager
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="customer")  # customer | professional | admin
+
+    # Professional-only fields, kept on the same table for now to stay
+    # "basic" — see TODO.md for the fuller `professionals` table (coverage
+    # area, rating, total_jobs, etc.) that README's data model describes.
+    service_category = db.Column(db.String(50), nullable=True)
+    verified = db.Column(db.Boolean, nullable=False, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return f"<User {self.email} ({self.role})>"
+
+
+class ContactSubmission(db.Model):
+    """Leads captured from the landing page's two call-to-action forms."""
+
+    __tablename__ = "contact_submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    role = db.Column(db.String(20), nullable=False)  # customer | professional
+    name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(30), nullable=False)
+    category = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))

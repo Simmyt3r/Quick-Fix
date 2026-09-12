@@ -1,0 +1,62 @@
+{% extends "base_app.html" %}
+{% block title %}Sign up — QuickFix Nearby{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <h1>Create your account</h1>
+    <p class="auth-sub">Book trusted pros, or start picking up jobs.</p>
+    <form method="POST" class="auth-form" id="register-form">
+      <label>Full name
+        <input type="text" name="name" required value="{{ request.form.get('name', '') }}">
+      </label>
+      <label>Email
+        <input type="email" name="email" required value="{{ request.form.get('email', '') }}">
+      </label>
+      <label>Password
+        <input type="password" name="password" required minlength="8">
+      </label>
+
+      <fieldset class="role-fieldset">
+        <legend>I'm signing up as a</legend>
+        <label class="role-option">
+          <input type="radio" name="role" value="customer" {% if request.form.get('role', 'customer') == 'customer' %}checked{% endif %}>
+          Customer — I need a service
+        </label>
+        <label class="role-option">
+          <input type="radio" name="role" value="professional" {% if request.form.get('role') == 'professional' %}checked{% endif %}>
+          Professional — I offer a service
+        </label>
+      </fieldset>
+
+      <label id="category-field" class="category-field">
+        Your trade
+        <select name="category">
+          <option value="">Select a category</option>
+          <option {% if request.form.get('category') == 'Electrician' %}selected{% endif %}>Electrician</option>
+          <option {% if request.form.get('category') == 'Plumber' %}selected{% endif %}>Plumber</option>
+          <option {% if request.form.get('category') == 'Mechanic' %}selected{% endif %}>Mechanic</option>
+          <option {% if request.form.get('category') == 'Builder' %}selected{% endif %}>Builder</option>
+          <option {% if request.form.get('category') == 'Barber' %}selected{% endif %}>Barber</option>
+        </select>
+      </label>
+
+      <button type="submit" class="btn btn-primary">Create account</button>
+    </form>
+    <p class="auth-foot">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+  </div>
+</div>
+<script>
+  (function () {
+    var form = document.getElementById("register-form");
+    var categoryField = document.getElementById("category-field");
+    function sync() {
+      var checked = form.querySelector('input[name="role"]:checked');
+      categoryField.style.display = (checked && checked.value === "professional") ? "flex" : "none";
+    }
+    Array.prototype.forEach.call(form.querySelectorAll('input[name="role"]'), function (el) {
+      el.addEventListener("change", sync);
+    });
+    sync();
+  })();
+</script>
+{% endblock %}

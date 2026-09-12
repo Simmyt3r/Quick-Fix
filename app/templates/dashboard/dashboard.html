@@ -1,0 +1,99 @@
+{% extends "base_app.html" %}
+{% block title %}Dashboard — QuickFix Nearby{% endblock %}
+{% block content %}
+
+<div class="dash-head">
+  <h1>Hey, {{ current_user.name.split(' ')[0] }}</h1>
+  <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
+</div>
+
+{% if current_user.role == 'customer' %}
+  <div class="dash-grid">
+    <div class="dash-card">
+      <h2>Your requests</h2>
+      <p class="empty-state">You haven't requested a service yet. Booking history will show up here once service requests go live.</p>
+      <a href="{{ url_for('main.index') }}#request" class="btn btn-primary">Request a service</a>
+    </div>
+  </div>
+
+{% elif current_user.role == 'professional' %}
+  <div class="dash-grid">
+    <div class="dash-card">
+      <h2>Your profile</h2>
+      <div class="ticket-row"><span class="k">Trade</span><span class="v">{{ current_user.service_category or "Not set" }}</span></div>
+      <div class="ticket-row">
+        <span class="k">Verification</span>
+        <span class="v">
+          {% if current_user.verified %}
+            <span class="badge badge-green">Verified</span>
+          {% else %}
+            <span class="badge badge-amber">Pending review</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="dash-card">
+      <h2>Leads near your trade</h2>
+      {% if leads %}
+        <table class="dash-table">
+          <thead><tr><th>Name</th><th>Phone</th><th>Received</th></tr></thead>
+          <tbody>
+          {% for lead in leads %}
+            <tr>
+              <td>{{ lead.name }}</td>
+              <td>{{ lead.phone }}</td>
+              <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="empty-state">No leads for {{ current_user.service_category or "your trade" }} yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+{% elif current_user.role == 'admin' %}
+  <div class="dash-grid">
+    <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.total_users }}</span>
+      <span class="stat-label">Registered users</span>
+    </div>
+    <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.total_customers }}</span>
+      <span class="stat-label">Customers</span>
+    </div>
+    <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.total_professionals }}</span>
+      <span class="stat-label">Professionals</span>
+    </div>
+    <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.total_leads }}</span>
+      <span class="stat-label">Leads captured</span>
+    </div>
+  </div>
+
+  <div class="dash-card" style="margin-top:20px;">
+    <h2>Recent leads</h2>
+    {% if leads %}
+      <table class="dash-table">
+        <thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Category</th><th>Received</th></tr></thead>
+        <tbody>
+        {% for lead in leads %}
+          <tr>
+            <td>{{ lead.role }}</td>
+            <td>{{ lead.name }}</td>
+            <td>{{ lead.phone }}</td>
+            <td>{{ lead.category or "—" }}</td>
+            <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No leads yet.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}QuickFix Nearby{% endblock %}</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="app-body">
+{% include "_topbar.html" %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="wrap">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main class="app-main wrap">
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

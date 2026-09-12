@@ -20,7 +20,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 
 ## Phase 3 — Auth
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
-- [ ] Google OAuth flow
+- [x] Google OAuth flow (Authlib + OIDC) — links to an existing password account by verified email if one matches, otherwise creates a new customer-role account; app runs fine without `GOOGLE_CLIENT_ID`/`SECRET` set, the button just doesn't render. No mid-flow "pick your role" step yet, so Google sign-ups always land as customer — see the note on the register page
 - [x] Session management (Flask-Login)
 - [x] CSRF protection on every form (Flask-WTF) — `/leads`, `/login`, `/register` all require a valid token; failures flash a friendly message and redirect
 - [ ] Password reset flow

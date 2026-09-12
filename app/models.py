@@ -12,7 +12,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    # Nullable: Google-only accounts have no password to check.
+    password_hash = db.Column(db.String(255), nullable=True)
+    # Google's "sub" claim — stable even if the person changes their Google email.
+    google_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
     role = db.Column(db.String(20), nullable=False, default="customer")  # customer | professional | admin
 
     # Professional-only fields, kept on the same table for now to stay
@@ -28,6 +31,8 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False  # Google-only account — there's no password to match.
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):

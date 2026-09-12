@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from app.extensions import csrf, db, limiter, login_manager, migrate
+from app.extensions import csrf, db, limiter, login_manager, migrate, oauth
 
 
 def create_app():
@@ -40,6 +40,25 @@ def create_app():
 
     csrf.init_app(app)
     limiter.init_app(app)
+
+    oauth.init_app(app)
+    google_client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    google_client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+    app.config["GOOGLE_OAUTH_ENABLED"] = bool(google_client_id and google_client_secret)
+    if app.config["GOOGLE_OAUTH_ENABLED"]:
+        oauth.register(
+            name="google",
+            client_id=google_client_id,
+            client_secret=google_client_secret,
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
+        )
+
+    @app.context_processor
+    def inject_google_oauth_flag():
+        # So templates can hide the "Continue with Google" button when it's not configured,
+        # instead of linking to a route that would just flash an error.
+        return {"google_oauth_enabled": app.config["GOOGLE_OAUTH_ENABLED"]}
 
     from app import models  # noqa: F401 — register models before Migrate/db touch anything
 

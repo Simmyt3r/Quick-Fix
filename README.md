@@ -4,7 +4,7 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page, lead capture, email/password auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, and security headers in place. Booking/service-requests and OAuth are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password + Google auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, and security headers in place. Booking/service-requests are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
@@ -22,7 +22,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 | Database | Postgres (Neon-ready) via SQLAlchemy + Flask-Migrate — schema-managed, not yet pointed at a real Neon project |
 | Media storage | Cloudinary — not yet integrated |
 | AI / ML | Hugging Face Inference API — not yet integrated |
-| Auth | Flask-Login (email/password, hashed) — live; Google OAuth not yet built |
+| Auth | Flask-Login — email/password (hashed) and Google OAuth (Authlib), both live |
 | Frontend | HTML5, hand-rolled CSS (Tailwind migration planned) |
 
 ## Core features (planned)

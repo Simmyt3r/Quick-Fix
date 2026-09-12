@@ -4,6 +4,8 @@ Flask-Login==0.6.3
 Flask-Migrate==4.1.0
 Flask-WTF==1.3.0
 Flask-Limiter==4.1.1
+Authlib==1.8.0
+requests==2.34.2
 python-dotenv==1.0.1
 gunicorn==22.0.0
 psycopg2-binary==2.9.9

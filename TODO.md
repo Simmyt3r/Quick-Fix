@@ -69,7 +69,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Basic monitoring / error tracking
 
 ## Housekeeping
-- [ ] Add `app/static/logo.png` (referenced in the nav, footer, and favicon — nav renders at 30x30, so a square, transparent PNG works best)
+- [x] Add `app/static/logo.png` — uploaded and wired into nav, footer, and favicon
 - [ ] Replace placeholder stats and testimonial on the landing page with real numbers before launch
 - [ ] Add `LICENSE` file (README references MIT)
 - [ ] Rotate any credentials that were ever pasted outside `.env`

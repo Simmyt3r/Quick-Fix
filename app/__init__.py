@@ -10,12 +10,25 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
-    os.makedirs(app.instance_path, exist_ok=True)
-    default_db_uri = "sqlite:///" + os.path.join(app.instance_path, "quickfix.db")
-    db_url = os.environ.get("DATABASE_URL", default_db_uri)
-    # Some providers (Heroku-style) hand out "postgres://"; SQLAlchemy/psycopg2 need "postgresql://".
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        # Some providers (Heroku-style) hand out "postgres://"; SQLAlchemy/psycopg2 need "postgresql://".
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+    elif os.environ.get("VERCEL"):
+        # Vercel's serverless functions have a read-only filesystem (aside from
+        # /tmp), so there's no SQLite fallback to reach for here — fail with a
+        # clear message instead of a cryptic filesystem-permission crash.
+        raise RuntimeError(
+            "DATABASE_URL is not set. This app has no writable filesystem to "
+            "fall back to on Vercel, so a real Postgres connection string is "
+            "required — set DATABASE_URL in the project's Environment "
+            "Variables (e.g. your Neon connection string) and redeploy."
+        )
+    else:
+        os.makedirs(app.instance_path, exist_ok=True)
+        db_url = "sqlite:///" + os.path.join(app.instance_path, "quickfix.db")
+
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

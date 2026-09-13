@@ -3,6 +3,10 @@ name: Run DB migrations
 on:
   workflow_dispatch: {}
 
+concurrency:
+  group: db-migrations
+  cancel-in-progress: false
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -15,6 +19,18 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Show migration state before upgrading
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FLASK_APP: run.py
+          SECRET_KEY: unused-for-migrations
+        run: |
+          echo "--- what the database thinks its current revision is ---"
+          flask db current -v || true
+          echo "--- what revisions exist in this checkout, and which is head ---"
+          flask db heads -v || true
+          flask db history || true
 
       - name: Run flask db upgrade
         env:

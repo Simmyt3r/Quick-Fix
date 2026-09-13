@@ -63,12 +63,13 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 
 ## Phase 10 — Deployment
 - [x] Fixed a crash-on-every-request bug: `create_app()` was unconditionally calling `os.makedirs()` for the SQLite fallback, even when `DATABASE_URL` was set — Vercel's serverless filesystem is read-only outside `/tmp`, so this crashed the function on every invocation. Now it only touches the filesystem when actually falling back to SQLite, and fails with a clear message (not a cryptic OSError) if `DATABASE_URL` is missing on Vercel.
-- [ ] Provision a real Neon project, put its connection string in `DATABASE_URL` (locally and in Vercel's env vars), then run `flask db upgrade` against it once from a machine that can reach it
-- [ ] Vercel project + env vars set (Production and Preview)
-- [ ] Confirm `vercel.json` routing works against a real deploy (static assets)
+- [x] Neon project provisioned, `DATABASE_URL` set in Vercel — site is live at quickfixnearby.vercel.app
+- [x] Vercel project + env vars set (Production) — confirmed live; double check Preview env vars are set too if preview deploys are used
+- [x] Confirm `vercel.json` routing works against a real deploy (static assets) — confirmed: logo and styling load correctly on the live homepage
+- [x] Decided how migrations run in production — `.github/workflows/migrate.yml`, manually triggered (`workflow_dispatch`) against a `DATABASE_URL` repo secret. First run failed, second succeeded (2026-09-13) — **worth glancing at the failed run's logs once to understand why, so it doesn't repeat on the next schema change**
+- [ ] **Confirm the GitHub Actions `DATABASE_URL` secret and the Vercel `DATABASE_URL` env var point at the same Neon database** — if they don't, the app will boot fine but registration/login will fail with a "relation does not exist" error even though the homepage loads
+- [ ] Full post-deploy smoke test — homepage confirmed rendering correctly; **still needs someone to actually register an account, log in, and load the dashboard on the live site** to confirm the DB write path works end-to-end (I can't do this remotely without live credentials)
 - [ ] Replace Flask-Limiter's in-memory storage with a shared backend (e.g. Upstash Redis) before relying on rate limits in production — each serverless instance currently tracks its own counters
-- [ ] Decide how migrations run in production (Vercel serverless functions shouldn't run `flask db upgrade` on cold start — run it manually or from CI before each deploy)
-- [ ] Post-deploy smoke test
 - [ ] Basic monitoring / error tracking
 
 ## Housekeeping

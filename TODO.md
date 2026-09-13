@@ -15,7 +15,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] `users` — id, name, email, password_hash, role, service_category, verified, created_at, updated_at
 - [ ] Split professional-only fields (`service_category`, `verified`) into a dedicated `professionals` table with coverage_area, rating, total_jobs, etc., per README's data model
 - [ ] `customers` — id, user_id, phone, location
-- [ ] `service_requests` — id, customer_id, professional_id, service_type, description, location, urgency, status, created_at
+- [x] `service_requests` — id, customer_id, professional_id, category, description, location, urgency, status, created_at, updated_at — live, with FK relationships to `users` for both customer and professional
 - [x] `contact_submissions` — landing-page leads, persisted via `/leads` and surfaced on professional/admin dashboards
 
 ## Phase 3 — Auth
@@ -27,28 +27,29 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Open-redirect protection on the post-login `next` param
 
 ## Phase 4 — Customer experience
-- [x] Basic dashboard (empty-state placeholder for requests)
-- [ ] Service request form (category, location, urgency, schedule)
-- [ ] Booking/service-request status tracking
+- [x] Dashboard: request form (category, description, location, urgency) posting to `/requests/new`
+- [x] Service-request status tracking — customer sees pending/accepted/completed/cancelled on their dashboard
+- [x] Customer can cancel their own pending request (`/requests/<id>/cancel`) — only while still pending, only their own
 - [ ] Post-job rating & review
 
 ## Phase 5 — Professional experience
-- [x] Basic dashboard — profile card (trade + verification badge) and matching leads list
+- [x] Basic dashboard — profile card (trade + verification badge), open requests in trade, active/completed jobs, and matching leads
+- [x] Incoming request accept/decline — `/requests/<id>/accept` (scoped to matching category, first-to-accept wins), `/requests/<id>/complete`. No decline action yet (a pro just leaves it for someone else)
 - [ ] Full profile setup — coverage area, availability toggle
 - [ ] Identity/verification doc upload (Cloudinary)
-- [ ] Incoming request accept/decline
-- [ ] Earnings + job history dashboard
+- [ ] Earnings + job history dashboard (jobs list exists; no earnings/payment tracking yet)
 
 ## Phase 6 — Admin
-- [x] Basic dashboard — user/lead counts + recent leads table
+- [x] Basic dashboard — user/lead/service-request counts, recent leads table, recent service requests table (with customer + assigned professional names)
 - [x] `flask create-admin` CLI command (no public admin signup)
-- [ ] Provider approval / verification review queue (flip `verified` from the dashboard instead of the DB directly)
+- [ ] Provider approval / verification review queue (flip `verified` from the dashboard instead of the DB directly) — note: `verified` currently isn't enforced anywhere, an unverified pro can still accept jobs
 - [ ] Incident tracking
 - [ ] Full reporting dashboard
 
 ## Phase 7 — Frontend
 - [x] Marketing landing page (`app/templates/index.html`), served via Flask (`GET /`)
 - [x] Auth pages (`/login`, `/register`) and role-aware dashboard (`/dashboard`)
+- [x] Global `<meta name="csrf-token">` on authenticated pages, independent of whether a form happens to render (dashboard pages with empty tables previously had nowhere to source a token from for JS/testing)
 - [x] Applied the blue/green/white brand palette to `app/static/css/style.css` (screenshot-tested at desktop + mobile widths; fixed a blue-on-blue button and a flex-gap fallback along the way)
 - [ ] Move `app/static/css/style.css` into a Tailwind build pipeline (currently hand-rolled CSS for the MVP)
 - [ ] PWA manifest + service worker

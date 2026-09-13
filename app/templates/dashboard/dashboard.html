@@ -2,6 +2,8 @@
 {% block title %}Dashboard — QuickFix Nearby{% endblock %}
 {% block content %}
 
+{% set status_badge = {'pending': 'amber', 'accepted': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
+
 <div class="dash-head">
   <h1>Hey, {{ current_user.name.split(' ')[0] }}</h1>
   <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
@@ -10,9 +12,62 @@
 {% if current_user.role == 'customer' %}
   <div class="dash-grid">
     <div class="dash-card">
+      <h2>Request a service</h2>
+      <form class="dash-form" method="POST" action="{{ url_for('requests.new') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Category
+          <select name="category" required>
+            <option value="">Select a category</option>
+            <option>Electrician</option>
+            <option>Plumber</option>
+            <option>Mechanic</option>
+            <option>Builder</option>
+            <option>Barber</option>
+          </select>
+        </label>
+        <label>What's going on?
+          <textarea name="description" placeholder="A short description of the job" required></textarea>
+        </label>
+        <label>Location
+          <input type="text" name="location" placeholder="e.g. Wuse II, Abuja" required>
+        </label>
+        <label>Urgency
+          <select name="urgency">
+            <option value="today">Today</option>
+            <option value="this_week">This week</option>
+            <option value="flexible" selected>Flexible</option>
+          </select>
+        </label>
+        <button type="submit" class="btn btn-primary">Request a service</button>
+      </form>
+    </div>
+
+    <div class="dash-card">
       <h2>Your requests</h2>
-      <p class="empty-state">You haven't requested a service yet. Booking history will show up here once service requests go live.</p>
-      <a href="{{ url_for('main.index') }}#request" class="btn btn-primary">Request a service</a>
+      {% if my_requests %}
+        <table class="dash-table">
+          <thead><tr><th>Category</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+          <tbody>
+          {% for r in my_requests %}
+            <tr>
+              <td>{{ r.category }}</td>
+              <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
+              <td>{{ r.created_at.strftime('%d %b') }}</td>
+              <td>
+                {% if r.status == 'pending' %}
+                  <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-ghost btn-sm">Cancel</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="empty-state">No requests yet — the form on the left sends one straight to nearby pros.</p>
+      {% endif %}
     </div>
   </div>
 
@@ -32,25 +87,80 @@
         </span>
       </div>
     </div>
+
     <div class="dash-card">
-      <h2>Leads near your trade</h2>
-      {% if leads %}
+      <h2>Open requests in your trade</h2>
+      {% if open_requests %}
         <table class="dash-table">
-          <thead><tr><th>Name</th><th>Phone</th><th>Received</th></tr></thead>
+          <thead><tr><th>Job</th><th>Location</th><th>Urgency</th><th></th></tr></thead>
           <tbody>
-          {% for lead in leads %}
+          {% for r in open_requests %}
             <tr>
-              <td>{{ lead.name }}</td>
-              <td>{{ lead.phone }}</td>
-              <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
+              <td>{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</td>
+              <td>{{ r.location }}</td>
+              <td>{{ r.urgency.replace('_', ' ')|capitalize }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('requests.accept', request_id=r.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                </form>
+              </td>
             </tr>
           {% endfor %}
           </tbody>
         </table>
       {% else %}
-        <p class="empty-state">No leads for {{ current_user.service_category or "your trade" }} yet.</p>
+        <p class="empty-state">No open requests for {{ current_user.service_category or "your trade" }} right now.</p>
       {% endif %}
     </div>
+  </div>
+
+  <div class="dash-card mt-20">
+    <h2>Your jobs</h2>
+    {% if my_jobs %}
+      <table class="dash-table">
+        <thead><tr><th>Job</th><th>Location</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for r in my_jobs %}
+          <tr>
+            <td>{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</td>
+            <td>{{ r.location }}</td>
+            <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
+            <td>
+              {% if r.status == 'accepted' %}
+                <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-primary btn-sm">Mark complete</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">Accepted and completed jobs will show up here.</p>
+    {% endif %}
+  </div>
+
+  <div class="dash-card mt-20">
+    <h2>Leads near your trade</h2>
+    {% if leads %}
+      <table class="dash-table">
+        <thead><tr><th>Name</th><th>Phone</th><th>Received</th></tr></thead>
+        <tbody>
+        {% for lead in leads %}
+          <tr>
+            <td>{{ lead.name }}</td>
+            <td>{{ lead.phone }}</td>
+            <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No leads for {{ current_user.service_category or "your trade" }} yet.</p>
+    {% endif %}
   </div>
 
 {% elif current_user.role == 'admin' %}
@@ -68,9 +178,39 @@
       <span class="stat-label">Professionals</span>
     </div>
     <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.total_requests }}</span>
+      <span class="stat-label">Service requests</span>
+    </div>
+    <div class="dash-card stat-card">
+      <span class="stat-num">{{ stats.pending_requests }}</span>
+      <span class="stat-label">Pending requests</span>
+    </div>
+    <div class="dash-card stat-card">
       <span class="stat-num">{{ stats.total_leads }}</span>
       <span class="stat-label">Leads captured</span>
     </div>
+  </div>
+
+  <div class="dash-card mt-20">
+    <h2>Recent service requests</h2>
+    {% if service_requests %}
+      <table class="dash-table">
+        <thead><tr><th>Customer</th><th>Category</th><th>Status</th><th>Pro</th><th>Submitted</th></tr></thead>
+        <tbody>
+        {% for r in service_requests %}
+          <tr>
+            <td>{{ r.customer.name }}</td>
+            <td>{{ r.category }}</td>
+            <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
+            <td>{{ r.professional.name if r.professional else "—" }}</td>
+            <td>{{ r.created_at.strftime('%d %b, %H:%M') }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No service requests yet.</p>
+    {% endif %}
   </div>
 
   <div class="dash-card mt-20">

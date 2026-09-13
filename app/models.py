@@ -52,6 +52,31 @@ class ContactSubmission(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class ServiceRequest(db.Model):
+    """A customer's request for a tradesperson — the core booking loop."""
+
+    __tablename__ = "service_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    professional_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+
+    category = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    location = db.Column(db.String(255), nullable=False)
+    urgency = db.Column(db.String(20), nullable=False, default="flexible")  # today | this_week | flexible
+    status = db.Column(db.String(20), nullable=False, default="pending")  # pending | accepted | completed | cancelled
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    customer = db.relationship("User", foreign_keys=[customer_id], backref="requests_made")
+    professional = db.relationship("User", foreign_keys=[professional_id], backref="jobs_taken")
+
+    def __repr__(self):
+        return f"<ServiceRequest {self.id} {self.category} {self.status}>"
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

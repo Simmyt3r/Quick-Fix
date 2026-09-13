@@ -67,10 +67,12 @@ def create_app():
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.requests import requests_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(requests_bp)
 
     from app.cli import create_admin
 

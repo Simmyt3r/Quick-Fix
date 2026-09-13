@@ -741,6 +741,46 @@ footer{
 }
 .badge-green{ background:#E7F5EC; color:#125C33; }
 .badge-amber{ background:#FDF1DC; color:#946200; }
+.badge-blue{ background:#E5F1FA; color:var(--blue-deep); }
+.badge-muted{ background:var(--paper-alt); color:var(--muted); }
+
+.btn-sm{ padding:7px 14px; font-size:13.5px; border-radius:6px; }
+
+/* ---------- dashboard forms (new service request) ---------- */
+.dash-form{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.dash-form label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:14px;
+  font-weight:600;
+  color:var(--ink);
+}
+.dash-form input:not([type="radio"]):not([type="checkbox"]),
+.dash-form select,
+.dash-form textarea{
+  padding:11px 14px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  font-family:'Barlow', sans-serif;
+  font-size:15px;
+  font-weight:400;
+  color:var(--ink);
+  background:#fff;
+}
+.dash-form textarea{ resize:vertical; min-height:90px; }
+.dash-form input:focus:not([type="radio"]):not([type="checkbox"]),
+.dash-form select:focus,
+.dash-form textarea:focus{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,104,183,0.15);
+}
+.dash-form .btn{ margin-top:6px; align-self:flex-start; }
 
 .dash-table{
   width:100%;

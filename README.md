@@ -4,13 +4,13 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page, lead capture, email/password + Google auth, and role-aware dashboards (customer/professional/admin) are live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, and security headers in place. Booking/service-requests are still ahead — see [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password + Google auth, role-aware dashboards, and the core booking loop (customers request a service, matching professionals accept and complete it) are all live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, and security headers in place. See [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
-- **24/7 service booking** — customers request services anytime, specifying category, location, and urgency
-- **Verified professionals** — pre-vetted providers with ratings, coverage areas, and identity verification
-- **Live dashboard** — booking/service-request tracking for customers, professionals, and admins
+- **24/7 service booking** — customers request services anytime, specifying category, description, location, and urgency; matching professionals accept and complete the job — live
+- **Verified professionals** — providers get a verification badge (manual for now — no review queue yet) and only see requests in their own trade
+- **Live dashboard** — full request lifecycle (pending → accepted → completed/cancelled) tracked for customers, professionals, and admins
 - **Secure by default** — hashed credentials, CSRF-protected forms, rate-limited auth/lead endpoints, and a strict CSP
 
 ## Tech stack
@@ -25,11 +25,11 @@ A marketplace platform connecting customers with verified, on-demand service pro
 | Auth | Flask-Login — email/password (hashed) and Google OAuth (Authlib), both live |
 | Frontend | HTML5, hand-rolled CSS (Tailwind migration planned) |
 
-## Core features (planned)
+## Core features
 
-1. **Customer booking** — location-based requests, category selection, urgency level, scheduling
-2. **Professional management** — profiles, availability, coverage area, ratings, earnings, verification
-3. **Admin controls** — lead review, provider approval, incident tracking, reporting
+1. **Customer booking** *(live)* — category selection, description, location, urgency; status tracking and self-service cancellation. Scheduling (a specific date/time, vs. just urgency) is still planned.
+2. **Professional management** *(partial)* — accept/complete jobs in your own trade, verification badge display. Availability toggle, coverage area, ratings, and earnings are still planned.
+3. **Admin controls** *(partial)* — dashboard with user/request/lead stats and recent activity tables. Provider approval queue, incident tracking, and deeper reporting are still planned.
 
 ### Service categories
 
@@ -53,19 +53,19 @@ A marketplace platform connecting customers with verified, on-demand service pro
 | Orange/Red | — | Map pins, urgency indicators |
 | Dark Gray | `#263238` | Body text |
 
-> ⚠️ **Not yet applied.** The live landing page currently uses a different placeholder palette (cream background, amber CTAs, forest green, brick red — see `app/static/css/style.css`). Restyling to the palette above is tracked in `TODO.md`, pending confirmation.
+✅ **Applied.** `app/static/css/style.css` uses this palette (`--blue`, `--green`, `--gold`, etc.) — screenshot-tested at desktop and mobile widths.
 
 **UX direction:** mobile-first, rounded cards, soft shadows, large touch targets, map-centric discovery ("Find & Fix It Fast"), verification badges, real professional photography. Primary flow: **Search → Find nearby pro → View profile → Book → Pay → Track → Rate.**
 
 ## Data model
 
-Implemented so far (Phase 2 in progress) — a unified `users` table plus a separate leads table; role-specific tables below are still planned:
+Implemented so far (Phase 2 in progress) — a unified `users` table plus separate leads and service-request tables; a couple of role-specific tables are still planned:
 
-- **users** *(live)* — id, name, email, password_hash, role (customer / professional / admin), service_category, verified, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
+- **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, role (customer / professional / admin), service_category, verified, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
 - **contact_submissions** *(live)* — landing-page leads from `/leads`, shown on professional dashboards (filtered by category) and the admin dashboard (all leads)
+- **service_requests** *(live)* — id, customer_id, professional_id (nullable until accepted), category, description, location, urgency, status (pending / accepted / completed / cancelled), created_at, updated_at. Both `customer_id` and `professional_id` are foreign keys to `users.id`.
 - **customers** *(planned)* — id, user_id, phone, location
 - **professionals** *(planned)* — id, user_id, service_type, verified, rating, total_jobs, coverage_area — will absorb `service_category`/`verified` off of `users`
-- **service_requests** *(planned)* — id, customer_id, professional_id (nullable), service_type, description, location, urgency, status, created_at
 
 Schema is managed by Flask-Migrate (Alembic) — see `migrations/`. Run `flask db upgrade` to apply.
 
@@ -78,14 +78,15 @@ Quick-Fix/
 ├── app/
 │   ├── __init__.py           # Flask app factory
 │   ├── extensions.py         # db, login_manager, migrate, csrf, limiter
-│   ├── models.py             # User, ContactSubmission
+│   ├── models.py             # User, ContactSubmission, ServiceRequest
 │   ├── cli.py                # `flask create-admin`
 │   ├── security.py           # response security headers (CSP, etc.)
 │   ├── errors.py             # CSRF/rate-limit error handlers
 │   ├── routes/
 │   │   ├── main.py           # "/", "/healthz", "/leads"
 │   │   ├── auth.py           # "/register", "/login", "/logout"
-│   │   └── dashboard.py      # "/dashboard" (role-aware)
+│   │   ├── dashboard.py      # "/dashboard" (role-aware)
+│   │   └── requests.py       # "/requests/new", "/accept", "/complete", "/cancel"
 │   ├── static/
 │   │   ├── css/style.css
 │   │   └── logo.png

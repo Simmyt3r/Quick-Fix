@@ -10,6 +10,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] `requirements.txt`
 - [x] `.env.example` (no real secrets, ever)
 - [x] `vercel.json` routing requests to the Flask WSGI app — scaffolded, not yet verified against a real deploy
+- [x] Cloudinary credentials added to Vercel env vars (`CLOUDINARY_CLOUD_NAME`/`API_KEY`/`API_SECRET`) — wired up in `app/uploads.py`, currently used for profile photos
 
 ## Phase 2 — Data models
 - [x] `users` — id, name, email, password_hash, role, service_category, verified, created_at, updated_at
@@ -17,6 +18,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] `customers` — id, user_id, phone, location
 - [x] `service_requests` — id, customer_id, professional_id, category, description, location, urgency, status, created_at, updated_at — live, with FK relationships to `users` for both customer and professional
 - [x] `contact_submissions` — landing-page leads, persisted via `/leads` and surfaced on professional/admin dashboards
+- [x] `users.avatar_url` — Cloudinary-hosted profile photo, nullable (falls back to an initial-letter avatar in the UI)
 
 ## Phase 3 — Auth
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
@@ -36,7 +38,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Basic dashboard — profile card (trade + verification badge), open requests in trade, active/completed jobs, and matching leads
 - [x] Incoming request accept/decline — `/requests/<id>/accept` (scoped to matching category, first-to-accept wins), `/requests/<id>/complete`. No decline action yet (a pro just leaves it for someone else)
 - [ ] Full profile setup — coverage area, availability toggle
-- [ ] Identity/verification doc upload (Cloudinary)
+- [ ] Identity/verification doc upload (Cloudinary) — the Cloudinary plumbing now exists (`app/uploads.py`, used for profile photos), so this is mostly a matter of a second upload flow + admin review UI, not new infrastructure
 - [ ] Earnings + job history dashboard (jobs list exists; no earnings/payment tracking yet)
 
 ## Phase 6 — Admin
@@ -51,14 +53,17 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Auth pages (`/login`, `/register`) and role-aware dashboard (`/dashboard`)
 - [x] Global `<meta name="csrf-token">` on authenticated pages, independent of whether a form happens to render (dashboard pages with empty tables previously had nowhere to source a token from for JS/testing)
 - [x] Applied the blue/green/white brand palette to `app/static/css/style.css` (screenshot-tested at desktop + mobile widths; fixed a blue-on-blue button and a flex-gap fallback along the way)
+- [x] PWA manifest + service worker, mobile tile-grid dashboard, bottom nav (Home / Request / Log out)
+- [x] Slide-out sidebar (mobile drawer, hamburger-triggered) with Home/Profile/Settings/Log out — on desktop (≥641px) it becomes a persistent rail, which also fixes a real gap: authenticated desktop users previously had no navigation at all once the bottom-nav hides at that width
+- [x] Profile page (`/profile/`) — edit name, upload a profile photo (Cloudinary), and (for professionals) trade category + verification status
+- [x] Settings page (`/profile/settings`) — change password, with a graceful message for Google-only accounts that have none
 - [ ] Move `app/static/css/style.css` into a Tailwind build pipeline (currently hand-rolled CSS for the MVP)
-- [ ] PWA manifest + service worker
 
 ## Phase 8 — AI/ML
 - [ ] Hugging Face integration — e.g. auto-categorizing free-text job descriptions
 
 ## Phase 9 — Security & hardening
-- [x] Security headers: CSP (no `unsafe-inline`), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS (HTTPS only)
+- [x] Security headers: CSP (no `unsafe-inline`), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS (HTTPS only) — `img-src` extended to allow `res.cloudinary.com` for avatar images
 - [x] Rate limiting on `/login` (10/min), `/register` (5/hr), `/leads` (10/hr) via Flask-Limiter — **in-memory storage only, resets per process; not safe for multiple serverless instances (see Phase 10)**
 - [ ] Input validation on every form and API route
 

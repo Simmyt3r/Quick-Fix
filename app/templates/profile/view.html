@@ -1,0 +1,77 @@
+{% extends "base_app.html" %}
+{% block title %}Profile — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="{{ url_for('dashboard.home') }}" class="page-back" aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <h1 class="page-title">Profile</h1>
+  <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+</div>
+
+<div class="form-page">
+
+  <div class="profile-photo-block">
+    <div class="profile-avatar-lg">
+      {% if current_user.avatar_url %}
+        <img src="{{ current_user.avatar_url }}" alt="">
+      {% else %}
+        <span>{{ current_user.name[0]|upper }}</span>
+      {% endif %}
+    </div>
+
+    {% if cloudinary_ready %}
+      <form method="POST" action="{{ url_for('profile.avatar') }}" enctype="multipart/form-data" id="avatar-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="avatar-upload-btn">
+          Change photo
+          <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" id="avatar-input">
+        </label>
+      </form>
+    {% else %}
+      <p class="avatar-hint">Photo uploads aren't configured yet.</p>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'professional' %}
+  <div class="profile-info-row">
+    <span>Verification</span>
+    {% if current_user.verified %}
+      <span class="badge badge-green">Verified</span>
+    {% else %}
+      <span class="badge badge-amber">Pending review</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('profile.update') }}" class="dash-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>Full name
+      <input type="text" name="name" value="{{ current_user.name }}" required>
+    </label>
+
+    <label>Email
+      <input type="email" value="{{ current_user.email }}" disabled>
+    </label>
+
+    {% if current_user.role == 'professional' %}
+    <label>Your trade
+      <select name="category">
+        {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
+          <option value="{{ cat }}" {% if cat == current_user.service_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-full">Save changes</button>
+  </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/avatar-upload.js') }}"></script>
+{% endblock %}

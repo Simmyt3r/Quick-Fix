@@ -18,7 +18,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="app-body">
+<body class="app-body {% if current_user.is_authenticated %}has-sidebar{% endif %}">
+
+{% if current_user.is_authenticated %}
+  {% include "_sidebar.html" %}
+{% endif %}
 
 {% if not current_user.is_authenticated %}
 {# Auth/marketing pages get the standard top nav #}
@@ -76,5 +80,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+{% if current_user.is_authenticated %}
+<script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+{% endif %}
 </body>
 </html>

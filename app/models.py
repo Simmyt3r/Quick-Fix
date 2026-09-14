@@ -24,6 +24,8 @@ class User(UserMixin, db.Model):
     service_category = db.Column(db.String(50), nullable=True)
     verified = db.Column(db.Boolean, nullable=False, default=False)
 
+    avatar_url = db.Column(db.String(500), nullable=True)  # Cloudinary secure_url
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

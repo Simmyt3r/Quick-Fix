@@ -31,6 +31,7 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB — mainly for avatar uploads
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -60,6 +61,10 @@ def create_app():
         # instead of linking to a route that would just flash an error.
         return {"google_oauth_enabled": app.config["GOOGLE_OAUTH_ENABLED"]}
 
+    from app.uploads import init_cloudinary
+
+    init_cloudinary(app)
+
     from app import models  # noqa: F401 — register models before Migrate/db touch anything
 
     migrate.init_app(app, db)
@@ -68,11 +73,13 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.requests import requests_bp
+    from app.routes.profile import profile_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(requests_bp)
+    app.register_blueprint(profile_bp)
 
     from app.cli import create_admin
 

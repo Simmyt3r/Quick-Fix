@@ -5,7 +5,7 @@ CSP = (
     "script-src 'self'; "
     "style-src 'self' https://fonts.googleapis.com; "
     "font-src https://fonts.gstatic.com; "
-    "img-src 'self' data:; "
+    "img-src 'self' data: https://res.cloudinary.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "frame-ancestors 'none'"

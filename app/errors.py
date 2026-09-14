@@ -12,3 +12,8 @@ def register_error_handlers(app):
     def handle_rate_limit(_e):
         flash("Too many attempts — please wait a bit and try again.", "error")
         return redirect(request.referrer or url_for("main.index"))
+
+    @app.errorhandler(413)
+    def handle_payload_too_large(_e):
+        flash("That file is too large — please use an image under 5MB.", "error")
+        return redirect(request.referrer or url_for("main.index"))

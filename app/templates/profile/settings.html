@@ -1,0 +1,41 @@
+{% extends "base_app.html" %}
+{% block title %}Settings — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="{{ url_for('dashboard.home') }}" class="page-back" aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <h1 class="page-title">Settings</h1>
+  <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+</div>
+
+<div class="form-page">
+  <h2 class="section-label settings-heading">Change password</h2>
+
+  {% if not current_user.password_hash %}
+    <div class="empty-card">
+      <p class="empty-icon">🔒</p>
+      <p class="empty-title">Signed in with Google</p>
+      <p class="empty-body">Your account doesn't have a password to change — you sign in with Google.</p>
+    </div>
+  {% else %}
+    <form method="POST" class="dash-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Current password
+        <input type="password" name="current_password" required>
+      </label>
+      <label>New password
+        <input type="password" name="new_password" required minlength="8">
+      </label>
+      <label>Confirm new password
+        <input type="password" name="confirm_password" required minlength="8">
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">Update password</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

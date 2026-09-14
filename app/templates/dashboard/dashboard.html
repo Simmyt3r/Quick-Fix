@@ -17,9 +17,14 @@
       <p class="app-greeting-label">Welcome back</p>
       <h1 class="app-greeting-name">{{ current_user.name.split(' ')[0] }} <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span></h1>
     </div>
-    <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
-    </a>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
   </div>
 </div>
 

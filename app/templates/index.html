@@ -19,7 +19,7 @@
       <img src="{{ url_for('static', filename='logo.png') }}" alt="QuickFix Nearby" class="brand-mark">
       QuickFix Nearby
     </a>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
       <a href="#services">Services</a>
       <a href="#how">How it works</a>
       <a href="#pros">For pros</a>
@@ -32,6 +32,9 @@
         <a href="#request" class="btn btn-primary">Book a pro</a>
       </div>
     </div>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
   </nav>
 </header>
 
@@ -60,12 +63,6 @@
         <div class="hero-actions">
           <a href="#request" class="btn btn-primary">Request a service</a>
           <a href="#how" class="btn btn-ghost">See how it works</a>
-        </div>
-        <!-- Placeholder metrics — replace with real numbers before launch -->
-        <div class="stats">
-          <div class="stat"><b>1,200+</b><span>Verified pros</span></div>
-          <div class="stat"><b>18 min</b><span>Average response</span></div>
-          <div class="stat"><b>6 cities</b><span>Covered so far</span></div>
         </div>
       </div>
 
@@ -177,10 +174,17 @@
           </li>
         </ul>
       </div>
-      <!-- Placeholder testimonial — swap for a real customer quote before launch -->
-      <div class="quote-ticket">
-        <p class="q">"Called at 8pm on a Sunday. A plumber was at my gate before 9."</p>
-        <div class="attrib">Amaka O. — Wuse II, Abuja</div>
+      <div class="cities-ticket">
+        <div class="cities-head">Where we operate</div>
+        <ul class="cities-list">
+          <li>Abuja</li>
+          <li>Lagos</li>
+          <li>Port Harcourt</li>
+          <li>Kano</li>
+          <li>Ibadan</li>
+          <li>Enugu</li>
+        </ul>
+        <p class="cities-note">Expanding to more cities as we onboard verified pros.</p>
       </div>
     </div>
   </section>
@@ -266,11 +270,28 @@
       </div>
     </div>
     <div class="foot-bottom">
-      <span>&copy; 2026 QuickFix Nearby. All rights reserved.</span>
+      <span>&copy; {{ current_year }} QuickFix Nearby. All rights reserved.</span>
       <span>Built for Nigeria.</span>
     </div>
   </div>
 </footer>
 
+<script>
+  (function () {
+    var toggle = document.getElementById('nav-toggle');
+    var links = document.getElementById('nav-links');
+    if (!toggle || !links) return;
+    toggle.addEventListener('click', function () {
+      var open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    links.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  })();
+</script>
 </body>
 </html>

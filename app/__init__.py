@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 from flask import Flask
 
@@ -60,6 +61,11 @@ def create_app():
         # So templates can hide the "Continue with Google" button when it's not configured,
         # instead of linking to a route that would just flash an error.
         return {"google_oauth_enabled": app.config["GOOGLE_OAUTH_ENABLED"]}
+
+    @app.context_processor
+    def inject_current_year():
+        # Keeps the footer copyright year correct without a redeploy every January.
+        return {"current_year": datetime.now(timezone.utc).year}
 
     from app.uploads import init_cloudinary
 

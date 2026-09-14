@@ -13,13 +13,6 @@
 </head>
 <body>
 
-<div class="bg-anim" aria-hidden="true">
-  <div class="blob blob-a"></div>
-  <div class="blob blob-b"></div>
-  <div class="blob blob-c"></div>
-  <div class="grain"></div>
-</div>
-
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-wrap">
@@ -30,27 +23,58 @@
   {% endif %}
 {% endwith %}
 
-<main class="splash">
-  <div class="splash-inner">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="splash-logo">
-    <div class="eyebrow">Verified tradespeople across Nigeria</div>
-    <h1>Something's broken.<br>We'll send <em>someone.</em></h1>
-    <p class="lede">QuickFix Nearby matches you with a vetted electrician, plumber, mechanic, builder or barber near you — booked in minutes, tracked until the job's done.</p>
-
-    <div class="splash-actions">
+<div class="splash">
+  <nav class="splash-nav">
+    <a href="#top" class="splash-brand">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="splash-logo">
+      QuickFix Nearby
+    </a>
+    <div class="splash-nav-actions">
       {% if current_user.is_authenticated %}
-        <a href="{{ url_for('dashboard.home') }}" class="btn btn-primary">Go to dashboard</a>
+        <a href="{{ url_for('dashboard.home') }}" class="btn btn-primary btn-sm">Dashboard</a>
       {% else %}
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Sign up</a>
-        <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Sign in</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Sign in</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Sign up</a>
       {% endif %}
     </div>
+  </nav>
 
-    <div class="splash-foot">
-      <span>&copy; {{ current_year }} QuickFix Nearby</span>
+  <main class="splash-main" id="top">
+    <div class="splash-grid">
+      <div>
+        <div class="tag"><span class="tag-dot"></span>Verified tradespeople across Nigeria</div>
+        <h1>Something's broken. We'll send someone.</h1>
+        <p class="lede">QuickFix Nearby matches you with a vetted electrician, plumber, mechanic, builder or barber near you — booked in minutes, tracked until the job's done.</p>
+        <div class="splash-actions">
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard.home') }}" class="btn btn-primary">Go to dashboard</a>
+          {% else %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Sign up</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Sign in</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="job-card" aria-hidden="true">
+        <div class="job-card-top">
+          <span>Service request</span>
+          <span class="job-card-id">#Q-0417</span>
+        </div>
+        <div class="job-status-label">Status</div>
+        <div class="job-status">
+          <span>Reported</span>
+          <span>Pro matched</span>
+          <span>En route — 12 min</span>
+          <span>Job complete</span>
+        </div>
+        <div class="job-meta">
+          <div class="job-meta-row"><span>Category</span><b>Electrician</b></div>
+          <div class="job-meta-row"><span>Location</span><b>Wuse II, Abuja</b></div>
+        </div>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
+</div>
 
 </body>
 </html>

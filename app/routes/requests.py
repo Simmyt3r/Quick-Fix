@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
@@ -8,6 +8,21 @@ requests_bp = Blueprint("requests", __name__, url_prefix="/requests")
 
 VALID_CATEGORIES = {"Electrician", "Plumber", "Mechanic", "Builder", "Barber"}
 VALID_URGENCY = {"today", "this_week", "flexible"}
+
+
+@requests_bp.route("/new", methods=["GET"])
+@login_required
+def new_form():
+    """Standalone full-screen request form — linked from the PWA tile grid."""
+    if current_user.role != "customer":
+        flash("Only customer accounts can request a service.", "error")
+        return redirect(url_for("dashboard.home"))
+    prefill_category = request.args.get("category", "")
+    return render_template(
+        "requests/new.html",
+        prefill_category=prefill_category,
+        categories=sorted(VALID_CATEGORIES),
+    )
 
 
 @requests_bp.route("/new", methods=["POST"])

@@ -1,239 +1,245 @@
 {% extends "base_app.html" %}
-{% block title %}Dashboard — QuickFix Nearby{% endblock %}
+{% block title %}Home — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
 {% block content %}
 
 {% set status_badge = {'pending': 'amber', 'accepted': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
+{% set status_label = {'pending': 'Pending', 'accepted': 'Accepted', 'completed': 'Done', 'cancelled': 'Cancelled'} %}
+{% set category_icon = {
+  'Electrician': '⚡', 'Plumber': '🚰', 'Mechanic': '🚗',
+  'Builder': '🧱', 'Barber': '✂️'
+} %}
 
-<div class="dash-head">
-  <h1>Hey, {{ current_user.name.split(' ')[0] }}</h1>
-  <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
+{# ── Top bar ── #}
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Welcome back</p>
+      <h1 class="app-greeting-name">{{ current_user.name.split(' ')[0] }} <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span></h1>
+    </div>
+    <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+    </a>
+  </div>
 </div>
 
+{# ─────────────────────── CUSTOMER ─────────────────────── #}
 {% if current_user.role == 'customer' %}
-  <div class="dash-grid">
-    <div class="dash-card">
-      <h2>Request a service</h2>
-      <form class="dash-form" method="POST" action="{{ url_for('requests.new') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label>Category
-          <select name="category" required>
-            <option value="">Select a category</option>
-            <option>Electrician</option>
-            <option>Plumber</option>
-            <option>Mechanic</option>
-            <option>Builder</option>
-            <option>Barber</option>
-          </select>
-        </label>
-        <label>What's going on?
-          <textarea name="description" placeholder="A short description of the job" required></textarea>
-        </label>
-        <label>Location
-          <input type="text" name="location" placeholder="e.g. Wuse II, Abuja" required>
-        </label>
-        <label>Urgency
-          <select name="urgency">
-            <option value="today">Today</option>
-            <option value="this_week">This week</option>
-            <option value="flexible" selected>Flexible</option>
-          </select>
-        </label>
-        <button type="submit" class="btn btn-primary">Request a service</button>
-      </form>
-    </div>
 
-    <div class="dash-card">
-      <h2>Your requests</h2>
-      {% if my_requests %}
-        <table class="dash-table">
-          <thead><tr><th>Category</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
-          <tbody>
-          {% for r in my_requests %}
-            <tr>
-              <td>{{ r.category }}</td>
-              <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
-              <td>{{ r.created_at.strftime('%d %b') }}</td>
-              <td>
-                {% if r.status == 'pending' %}
-                  <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-ghost btn-sm">Cancel</button>
-                  </form>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="empty-state">No requests yet — the form on the left sends one straight to nearby pros.</p>
-      {% endif %}
+  {# Summary banner #}
+  <div class="home-banner">
+    <div class="home-banner-inner">
+      <p class="home-banner-label">Active requests</p>
+      <p class="home-banner-num">{{ my_requests | selectattr('status', 'in', ['pending', 'accepted']) | list | length }}</p>
+    </div>
+    <div class="home-banner-inner">
+      <p class="home-banner-label">Completed</p>
+      <p class="home-banner-num">{{ my_requests | selectattr('status', 'equalto', 'completed') | list | length }}</p>
     </div>
   </div>
 
-{% elif current_user.role == 'professional' %}
-  <div class="dash-grid">
-    <div class="dash-card">
-      <h2>Your profile</h2>
-      <div class="ticket-row"><span class="k">Trade</span><span class="v">{{ current_user.service_category or "Not set" }}</span></div>
-      <div class="ticket-row">
-        <span class="k">Verification</span>
-        <span class="v">
-          {% if current_user.verified %}
-            <span class="badge badge-green">Verified</span>
-          {% else %}
-            <span class="badge badge-amber">Pending review</span>
-          {% endif %}
-        </span>
+  {# Quick-action tiles #}
+  <section class="tile-section">
+    <h2 class="section-label">What do you need fixed?</h2>
+    <div class="tile-grid">
+      {% for cat, icon in category_icon.items() %}
+      <a href="{{ url_for('requests.new_form') }}?category={{ cat }}" class="tile">
+        <span class="tile-icon">{{ icon }}</span>
+        <span class="tile-label">{{ cat }}</span>
+      </a>
+      {% endfor %}
+      <a href="{{ url_for('requests.new_form') }}" class="tile tile-more">
+        <span class="tile-icon">＋</span>
+        <span class="tile-label">More</span>
+      </a>
+    </div>
+  </section>
+
+  {# Activity feed #}
+  <section class="feed-section">
+    <div class="feed-header">
+      <h2 class="section-label">Your requests</h2>
+    </div>
+    {% if my_requests %}
+      <ul class="feed-list">
+        {% for r in my_requests %}
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
+            <span>{{ category_icon.get(r.category, '🔧') }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ r.category }}</p>
+            <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b') }}</p>
+          </div>
+          <div class="feed-right">
+            <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
+            {% if r.status == 'pending' %}
+            <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}" style="margin-top:6px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="feed-cancel">Cancel</button>
+            </form>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-card">
+        <p class="empty-icon">🔧</p>
+        <p class="empty-title">No requests yet</p>
+        <p class="empty-body">Tap a category above to send your first job to nearby pros.</p>
       </div>
-    </div>
+    {% endif %}
+  </section>
 
-    <div class="dash-card">
-      <h2>Open requests in your trade</h2>
+{# ─────────────────────── PROFESSIONAL ─────────────────────── #}
+{% elif current_user.role == 'professional' %}
+
+  {# Profile summary banner #}
+  <div class="home-banner home-banner-pro">
+    <div class="home-banner-inner">
+      <p class="home-banner-label">Trade</p>
+      <p class="home-banner-val">{{ current_user.service_category or '—' }}</p>
+    </div>
+    <div class="home-banner-inner">
+      <p class="home-banner-label">Status</p>
+      <p class="home-banner-val">
+        {% if current_user.verified %}✅ Verified{% else %}⏳ Pending{% endif %}
+      </p>
+    </div>
+    <div class="home-banner-inner">
+      <p class="home-banner-label">Jobs done</p>
+      <p class="home-banner-num">{{ my_jobs | selectattr('status', 'equalto', 'completed') | list | length }}</p>
+    </div>
+  </div>
+
+  {# Open leads / requests in trade #}
+  <section class="feed-section">
+    <div class="feed-header">
+      <h2 class="section-label">Open near you</h2>
       {% if open_requests %}
-        <table class="dash-table">
-          <thead><tr><th>Job</th><th>Location</th><th>Urgency</th><th></th></tr></thead>
-          <tbody>
-          {% for r in open_requests %}
-            <tr>
-              <td>{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</td>
-              <td>{{ r.location }}</td>
-              <td>{{ r.urgency.replace('_', ' ')|capitalize }}</td>
-              <td>
-                <form method="POST" action="{{ url_for('requests.accept', request_id=r.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-primary btn-sm">Accept</button>
-                </form>
-              </td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="empty-state">No open requests for {{ current_user.service_category or "your trade" }} right now.</p>
+      <span class="feed-count">{{ open_requests | length }}</span>
       {% endif %}
     </div>
-  </div>
+    {% if open_requests %}
+      <ul class="feed-list">
+        {% for r in open_requests %}
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-blue">
+            <span>{{ category_icon.get(r.category, '🔧') }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ r.description[:55] }}{% if r.description|length > 55 %}…{% endif %}</p>
+            <p class="feed-sub">{{ r.location }} · {{ r.urgency.replace('_',' ') | capitalize }}</p>
+          </div>
+          <form method="POST" action="{{ url_for('requests.accept', request_id=r.id) }}" class="feed-right">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-card">
+        <p class="empty-icon">📭</p>
+        <p class="empty-title">No open jobs right now</p>
+        <p class="empty-body">New requests for {{ current_user.service_category or 'your trade' }} will appear here.</p>
+      </div>
+    {% endif %}
+  </section>
 
-  <div class="dash-card mt-20">
-    <h2>Your jobs</h2>
+  {# My jobs #}
+  <section class="feed-section">
+    <div class="feed-header">
+      <h2 class="section-label">Your jobs</h2>
+    </div>
     {% if my_jobs %}
-      <table class="dash-table">
-        <thead><tr><th>Job</th><th>Location</th><th>Status</th><th></th></tr></thead>
-        <tbody>
+      <ul class="feed-list">
         {% for r in my_jobs %}
-          <tr>
-            <td>{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</td>
-            <td>{{ r.location }}</td>
-            <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
-            <td>
-              {% if r.status == 'accepted' %}
-                <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-primary btn-sm">Mark complete</button>
-                </form>
-              {% endif %}
-            </td>
-          </tr>
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
+            <span>{{ category_icon.get(r.category, '🔧') }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ r.description[:55] }}{% if r.description|length > 55 %}…{% endif %}</p>
+            <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b') }}</p>
+          </div>
+          <div class="feed-right">
+            <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
+            {% if r.status == 'accepted' %}
+            <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}" style="margin-top:6px">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-sm">Done</button>
+            </form>
+            {% endif %}
+          </div>
+        </li>
         {% endfor %}
-        </tbody>
-      </table>
+      </ul>
     {% else %}
-      <p class="empty-state">Accepted and completed jobs will show up here.</p>
+      <div class="empty-card">
+        <p class="empty-icon">💼</p>
+        <p class="empty-title">No jobs yet</p>
+        <p class="empty-body">Jobs you accept will appear here.</p>
+      </div>
     {% endif %}
-  </div>
+  </section>
 
-  <div class="dash-card mt-20">
-    <h2>Leads near your trade</h2>
-    {% if leads %}
-      <table class="dash-table">
-        <thead><tr><th>Name</th><th>Phone</th><th>Received</th></tr></thead>
-        <tbody>
-        {% for lead in leads %}
-          <tr>
-            <td>{{ lead.name }}</td>
-            <td>{{ lead.phone }}</td>
-            <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="empty-state">No leads for {{ current_user.service_category or "your trade" }} yet.</p>
-    {% endif %}
-  </div>
-
+{# ─────────────────────── ADMIN ─────────────────────── #}
 {% elif current_user.role == 'admin' %}
-  <div class="dash-grid">
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.total_users }}</span>
-      <span class="stat-label">Registered users</span>
-    </div>
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.total_customers }}</span>
-      <span class="stat-label">Customers</span>
-    </div>
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.total_professionals }}</span>
-      <span class="stat-label">Professionals</span>
-    </div>
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.total_requests }}</span>
-      <span class="stat-label">Service requests</span>
-    </div>
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.pending_requests }}</span>
-      <span class="stat-label">Pending requests</span>
-    </div>
-    <div class="dash-card stat-card">
-      <span class="stat-num">{{ stats.total_leads }}</span>
-      <span class="stat-label">Leads captured</span>
-    </div>
+
+  {# Stat tiles #}
+  <div class="home-banner home-banner-admin">
+    <div class="home-banner-inner"><p class="home-banner-label">Users</p><p class="home-banner-num">{{ stats.total_users }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Requests</p><p class="home-banner-num">{{ stats.total_requests }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Pending</p><p class="home-banner-num">{{ stats.pending_requests }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Leads</p><p class="home-banner-num">{{ stats.total_leads }}</p></div>
   </div>
 
-  <div class="dash-card mt-20">
-    <h2>Recent service requests</h2>
+  <section class="feed-section">
+    <div class="feed-header"><h2 class="section-label">Recent requests</h2></div>
     {% if service_requests %}
-      <table class="dash-table">
-        <thead><tr><th>Customer</th><th>Category</th><th>Status</th><th>Pro</th><th>Submitted</th></tr></thead>
-        <tbody>
+      <ul class="feed-list">
         {% for r in service_requests %}
-          <tr>
-            <td>{{ r.customer.name }}</td>
-            <td>{{ r.category }}</td>
-            <td><span class="badge badge-{{ status_badge[r.status] }}">{{ r.status|capitalize }}</span></td>
-            <td>{{ r.professional.name if r.professional else "—" }}</td>
-            <td>{{ r.created_at.strftime('%d %b, %H:%M') }}</td>
-          </tr>
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
+            <span>{{ category_icon.get(r.category, '🔧') }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ r.category }} — {{ r.customer.name }}</p>
+            <p class="feed-sub">{{ r.professional.name if r.professional else 'Unassigned' }} · {{ r.created_at.strftime('%d %b, %H:%M') }}</p>
+          </div>
+          <div class="feed-right">
+            <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
+          </div>
+        </li>
         {% endfor %}
-        </tbody>
-      </table>
+      </ul>
     {% else %}
-      <p class="empty-state">No service requests yet.</p>
+      <div class="empty-card"><p class="empty-title">No service requests yet.</p></div>
     {% endif %}
-  </div>
+  </section>
 
-  <div class="dash-card mt-20">
-    <h2>Recent leads</h2>
+  <section class="feed-section">
+    <div class="feed-header"><h2 class="section-label">Recent leads</h2></div>
     {% if leads %}
-      <table class="dash-table">
-        <thead><tr><th>Role</th><th>Name</th><th>Phone</th><th>Category</th><th>Received</th></tr></thead>
-        <tbody>
+      <ul class="feed-list">
         {% for lead in leads %}
-          <tr>
-            <td>{{ lead.role }}</td>
-            <td>{{ lead.name }}</td>
-            <td>{{ lead.phone }}</td>
-            <td>{{ lead.category or "—" }}</td>
-            <td>{{ lead.created_at.strftime('%d %b, %H:%M') }}</td>
-          </tr>
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-blue">
+            <span>{{ '👷' if lead.role == 'professional' else '👤' }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ lead.name }} <span class="badge badge-{{ 'blue' if lead.role == 'professional' else 'green' }}">{{ lead.role | capitalize }}</span></p>
+            <p class="feed-sub">{{ lead.phone }}{% if lead.category %} · {{ lead.category }}{% endif %} · {{ lead.created_at.strftime('%d %b, %H:%M') }}</p>
+          </div>
+        </li>
         {% endfor %}
-        </tbody>
-      </table>
+      </ul>
     {% else %}
-      <p class="empty-state">No leads yet.</p>
+      <div class="empty-card"><p class="empty-title">No leads yet.</p></div>
     {% endif %}
-  </div>
-{% endif %}
+  </section>
 
+{% endif %}
 {% endblock %}

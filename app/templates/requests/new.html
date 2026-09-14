@@ -1,0 +1,45 @@
+{% extends "base_app.html" %}
+{% block title %}New Request — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="{{ url_for('dashboard.home') }}" class="page-back" aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <h1 class="page-title">New Request</h1>
+</div>
+
+<div class="form-page">
+  <form method="POST" action="{{ url_for('requests.new') }}" class="dash-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>What do you need?
+      <select name="category" required>
+        <option value="">Pick a category</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if cat == prefill_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Describe the job
+      <textarea name="description" placeholder="e.g. Leaking pipe under the kitchen sink, needs urgent fix" required></textarea>
+    </label>
+
+    <label>Your location
+      <input type="text" name="location" placeholder="e.g. Wuse II, Abuja" required>
+    </label>
+
+    <label>Urgency
+      <select name="urgency">
+        <option value="today">Today — ASAP</option>
+        <option value="this_week">This week</option>
+        <option value="flexible" selected>Flexible</option>
+      </select>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-full">Send Request</button>
+  </form>
+</div>
+{% endblock %}

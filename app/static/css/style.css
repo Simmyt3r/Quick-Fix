@@ -821,3 +821,376 @@ footer{
 @media (max-width:600px){
   .dash-head{ flex-wrap:wrap; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PWA MOBILE SHELL
+   Added on top of the existing desktop/marketing stylesheet.
+   Uses a mobile-first layout with bottom nav, safe-area
+   insets, and OPay-style card/tile/feed patterns.
+═══════════════════════════════════════════════════════════ */
+
+/* ── Layout shell ── */
+.app-body{
+  background:var(--paper-alt);
+  min-height:100vh;
+  min-height:100dvh; /* dynamic viewport on mobile */
+}
+
+.app-main{
+  padding:0;
+  max-width:100%;
+}
+
+/* Remove the old .wrap constraint inside app pages */
+.app-main.no-wrap{ padding:0; }
+
+/* Bottom nav clearance — content must not hide behind it */
+.app-main{ padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px)); }
+
+/* ── Top greeting bar ── */
+.app-topbar{
+  background:#fff;
+  padding:env(safe-area-inset-top, 0px) 0 0;
+  position:sticky;
+  top:0;
+  z-index:10;
+  box-shadow:0 1px 0 var(--line);
+}
+.app-topbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 20px;
+}
+.app-greeting-label{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+  margin:0 0 2px;
+}
+.app-greeting-name{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:700;
+  color:var(--ink);
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.app-logo-mark{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+  background:#fff;
+  border-radius:10px;
+  padding:3px;
+  border:1px solid var(--line);
+}
+.app-logo-link{ display:block; flex:none; }
+
+/* ── Flash messages (repositioned for mobile) ── */
+.flash-wrap{
+  padding:10px 16px 0;
+}
+.flash{ border-radius:10px; margin:0; }
+
+/* ── Home summary banner ── */
+.home-banner{
+  display:flex;
+  background:linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
+  margin:16px;
+  border-radius:16px;
+  padding:20px 20px;
+  gap:0;
+}
+.home-banner-pro{
+  background:linear-gradient(135deg, var(--green-deep) 0%, var(--green) 100%);
+}
+.home-banner-admin{
+  background:linear-gradient(135deg, var(--ink) 0%, #3D4F58 100%);
+}
+.home-banner-inner{
+  flex:1;
+  text-align:center;
+  position:relative;
+}
+.home-banner-inner + .home-banner-inner::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:10%;
+  height:80%;
+  width:1px;
+  background:rgba(255,255,255,0.25);
+}
+.home-banner-label{
+  font-size:11px;
+  color:rgba(255,255,255,0.75);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin:0 0 4px;
+}
+.home-banner-num{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:34px;
+  font-weight:700;
+  color:#fff;
+  margin:0;
+  line-height:1;
+}
+.home-banner-val{
+  font-size:15px;
+  font-weight:600;
+  color:#fff;
+  margin:0;
+  line-height:1.3;
+}
+
+/* ── Section labels ── */
+.section-label{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:17px;
+  font-weight:700;
+  color:var(--ink);
+  margin:0;
+  letter-spacing:0.2px;
+}
+.tile-section{ padding:0 16px 8px; }
+.tile-section .section-label{ margin-bottom:12px; }
+
+/* ── Quick-action tile grid ── */
+.tile-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+}
+.tile{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px 8px;
+  text-decoration:none;
+  color:var(--ink);
+  transition:background 0.12s, transform 0.12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.tile:active{ background:var(--paper-alt); transform:scale(0.96); }
+.tile-icon{ font-size:26px; line-height:1; }
+.tile-label{ font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
+.tile-more{ border-style:dashed; }
+.tile-more .tile-icon{ font-size:22px; color:var(--blue); font-weight:300; }
+
+/* ── Feed section ── */
+.feed-section{ padding:8px 0 0; }
+.feed-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 20px 10px;
+}
+.feed-count{
+  background:var(--blue);
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:999px;
+  min-width:22px;
+  text-align:center;
+}
+.feed-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  background:#fff;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.feed-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  -webkit-tap-highlight-color:transparent;
+}
+.feed-item:last-child{ border-bottom:none; }
+
+.feed-icon-wrap{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  flex:none;
+}
+.feed-icon-green{ background:#E7F5EC; }
+.feed-icon-amber{ background:#FDF1DC; }
+.feed-icon-blue{ background:#E5F1FA; }
+.feed-icon-muted{ background:var(--paper-alt); }
+
+.feed-body{
+  flex:1;
+  min-width:0;
+}
+.feed-title{
+  font-weight:600;
+  font-size:14.5px;
+  color:var(--ink);
+  margin:0 0 3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.feed-sub{
+  font-size:12.5px;
+  color:var(--muted);
+  margin:0;
+}
+.feed-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  flex:none;
+  gap:4px;
+}
+.feed-cancel{
+  font-size:12px;
+  font-weight:600;
+  color:var(--urgent);
+  background:none;
+  border:none;
+  padding:0;
+  cursor:pointer;
+  font-family:'Barlow', sans-serif;
+}
+
+/* ── Empty states ── */
+.empty-card{
+  text-align:center;
+  padding:40px 24px;
+  background:#fff;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.empty-icon{ font-size:36px; margin:0 0 10px; }
+.empty-title{ font-weight:700; font-size:16px; margin:0 0 6px; color:var(--ink); }
+.empty-body{ font-size:14px; color:var(--muted); margin:0; max-width:30ch; margin-inline:auto; }
+
+/* ── Bottom navigation ── */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:100;
+  background:#fff;
+  border-top:1px solid var(--line);
+  display:flex;
+  align-items:stretch;
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  box-shadow:0 -4px 20px rgba(38,50,56,0.08);
+}
+.bnav-item{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:10px 4px;
+  text-decoration:none;
+  color:var(--muted);
+  font-size:10.5px;
+  font-weight:600;
+  -webkit-tap-highlight-color:transparent;
+  transition:color 0.12s;
+}
+.bnav-item svg{ width:22px; height:22px; }
+.bnav-item.active{ color:var(--blue); }
+.bnav-item.bnav-action{
+  color:#fff;
+  background:var(--blue);
+  border-radius:16px 16px 0 0;
+  margin:0 8px;
+  box-shadow:0 -4px 16px rgba(0,104,183,0.35);
+}
+.bnav-item.bnav-action:active{ background:var(--blue-deep); }
+
+/* ── Page header (back-button pages) ── */
+.page-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 20px 12px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.page-back{
+  display:flex;
+  align-items:center;
+  color:var(--blue);
+  -webkit-tap-highlight-color:transparent;
+}
+.page-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:700;
+  color:var(--ink);
+  margin:0;
+}
+
+/* ── Standalone form page ── */
+.form-page{
+  padding:20px 20px 32px;
+}
+.form-page .dash-form{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.btn-full{ width:100%; justify-content:center; }
+
+/* ── Auth pages on mobile ── */
+@media (max-width: 480px){
+  .auth-shell{ padding:16px 0 32px; }
+  .auth-card{
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+    box-shadow:none;
+    max-width:100%;
+  }
+}
+
+/* ── Desktop overrides (keep the desktop nav for > 640px) ── */
+@media (min-width: 641px){
+  .bottom-nav{ display:none; }
+  .app-main{ padding-bottom:32px; }
+  .app-topbar{ display:none; }
+  /* Re-activate the marketing topbar for wider viewports */
+  .app-body header { display:block; }
+
+  /* Constrain the feed/tiles to a readable max width on desktop */
+  .home-banner, .tile-section, .feed-section, .form-page{
+    max-width:600px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .home-banner{ margin:24px auto; }
+}
+
+/* ── Badge — ensure blue variant renders cleanly ── */
+.badge-blue{ background:#E5F1FA; color:var(--blue-deep); }

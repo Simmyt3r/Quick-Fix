@@ -14,7 +14,7 @@ VALID_URGENCY = {"today", "this_week", "flexible"}
 @login_required
 def new_form():
     """Standalone full-screen request form — linked from the PWA tile grid."""
-    if current_user.role != "customer":
+    if not current_user.is_customer:
         flash("Only customer accounts can request a service.", "error")
         return redirect(url_for("dashboard.home"))
     prefill_category = request.args.get("category", "")
@@ -29,7 +29,7 @@ def new_form():
 @login_required
 @limiter.limit("20 per hour", methods=["POST"])
 def new():
-    if current_user.role != "customer":
+    if not current_user.is_customer:
         flash("Only customer accounts can request a service.", "error")
         return redirect(url_for("dashboard.home"))
 
@@ -82,7 +82,7 @@ def cancel(request_id):
 @requests_bp.route("/<int:request_id>/accept", methods=["POST"])
 @login_required
 def accept(request_id):
-    if current_user.role != "professional":
+    if not current_user.is_professional:
         flash("Only professional accounts can accept jobs.", "error")
         return redirect(url_for("dashboard.home"))
 

@@ -11,14 +11,33 @@ dashboard_bp = Blueprint("dashboard", __name__)
 def home():
     context = {}
 
-    if current_user.role == "customer":
+    if current_user.is_admin:
+        context["service_requests"] = (
+            ServiceRequest.query.order_by(ServiceRequest.created_at.desc()).limit(20).all()
+        )
+        context["leads"] = (
+            ContactSubmission.query.order_by(ContactSubmission.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        context["stats"] = {
+            "total_users": User.query.count(),
+            "total_customers": User.query.filter_by(is_customer=True).count(),
+            "total_professionals": User.query.filter_by(is_professional=True).count(),
+            "total_leads": ContactSubmission.query.count(),
+            "total_requests": ServiceRequest.query.count(),
+            "pending_requests": ServiceRequest.query.filter_by(status="pending").count(),
+        }
+        return render_template("dashboard/dashboard.html", **context)
+
+    if current_user.is_customer:
         context["my_requests"] = (
             ServiceRequest.query.filter_by(customer_id=current_user.id)
             .order_by(ServiceRequest.created_at.desc())
             .all()
         )
 
-    elif current_user.role == "professional":
+    if current_user.is_professional:
         context["open_requests"] = (
             ServiceRequest.query.filter_by(
                 status="pending", category=current_user.service_category
@@ -49,23 +68,5 @@ def home():
             if current_user.service_category
             else []
         )
-
-    elif current_user.role == "admin":
-        context["service_requests"] = (
-            ServiceRequest.query.order_by(ServiceRequest.created_at.desc()).limit(20).all()
-        )
-        context["leads"] = (
-            ContactSubmission.query.order_by(ContactSubmission.created_at.desc())
-            .limit(20)
-            .all()
-        )
-        context["stats"] = {
-            "total_users": User.query.count(),
-            "total_customers": User.query.filter_by(role="customer").count(),
-            "total_professionals": User.query.filter_by(role="professional").count(),
-            "total_leads": ContactSubmission.query.count(),
-            "total_requests": ServiceRequest.query.count(),
-            "pending_requests": ServiceRequest.query.filter_by(status="pending").count(),
-        }
 
     return render_template("dashboard/dashboard.html", **context)

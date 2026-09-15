@@ -182,6 +182,19 @@ h1{
   font-size:14.5px;
   border-radius:6px;
 }
+.btn-google{
+  background:#fff;
+  border:1.5px solid var(--line);
+  color:var(--ink);
+}
+.btn-google:hover{ background:var(--paper-dim); border-color:#C7CFD6; }
+.splash-google{
+  margin-top:14px;
+  width:fit-content;
+}
+@media (max-width:560px){
+  .splash-google{ width:100%; }
+}
 
 /* ---------- live status card (the hero moment) ---------- */
 .job-card{

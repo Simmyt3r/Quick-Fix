@@ -18,7 +18,12 @@
     </div>
     <div>
       <p class="sidebar-user-name">{{ current_user.name }}</p>
-      <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
+      {% if current_user.is_admin %}
+        <span class="role-badge role-admin">admin</span>
+      {% else %}
+        {% if current_user.is_customer %}<span class="role-badge role-customer">customer</span>{% endif %}
+        {% if current_user.is_professional %}<span class="role-badge role-professional">professional</span>{% endif %}
+      {% endif %}
     </div>
   </div>
 

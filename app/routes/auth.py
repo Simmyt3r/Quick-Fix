@@ -10,9 +10,6 @@ from app.models import User
 
 auth_bp = Blueprint("auth", __name__)
 
-VALID_ROLES = {"customer", "professional"}
-
-
 def _safe_next(target):
     """Only follow `next` if it's a relative, same-site path — never an open redirect."""
     if not target:
@@ -33,11 +30,13 @@ def register():
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip().lower()
         password = request.form.get("password") or ""
-        role = request.form.get("role") or "customer"
+        # Checkboxes: both may be checked, but at least one is required.
+        is_customer = request.form.get("is_customer") == "on"
+        is_professional = request.form.get("is_professional") == "on"
         category = (request.form.get("category") or "").strip() or None
 
-        if role not in VALID_ROLES:
-            role = "customer"
+        if not is_customer and not is_professional:
+            is_customer = True  # sensible default rather than an accountless user
 
         if not name or not email or len(password) < 8:
             flash("Please fill in your name, email, and an 8+ character password.", "error")
@@ -50,8 +49,9 @@ def register():
         user = User(
             name=name,
             email=email,
-            role=role,
-            service_category=category if role == "professional" else None,
+            is_customer=is_customer,
+            is_professional=is_professional,
+            service_category=category if is_professional else None,
         )
         user.set_password(password)
         db.session.add(user)
@@ -155,7 +155,7 @@ def google_callback():
         # matching password account rather than creating a duplicate.
         user = User.query.filter_by(email=email).first()
         if user is None:
-            user = User(name=name, email=email, role="customer")
+            user = User(name=name, email=email, is_customer=True, is_professional=False)
             db.session.add(user)
             is_new_account = True
         user.google_id = google_id

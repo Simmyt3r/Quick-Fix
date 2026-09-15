@@ -16,7 +16,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=True)
     # Google's "sub" claim — stable even if the person changes their Google email.
     google_id = db.Column(db.String(255), unique=True, nullable=True, index=True)
-    role = db.Column(db.String(20), nullable=False, default="customer")  # customer | professional | admin
+
+    # A user can be a customer, a professional, or both at once — hence two
+    # independent flags rather than a single role string. `role` is kept only
+    # to flag admins, who are a separate, exclusive account type.
+    is_customer = db.Column(db.Boolean, nullable=False, default=True)
+    is_professional = db.Column(db.Boolean, nullable=False, default=False)
+    role = db.Column(db.String(20), nullable=False, default="customer")  # customer | admin (legacy values may still say "professional" pre-migration)
 
     # Professional-only fields, kept on the same table for now to stay
     # "basic" — see TODO.md for the fuller `professionals` table (coverage
@@ -38,7 +44,12 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return f"<User {self.email} ({self.role})>"
+        types = "+".join(t for t, flag in (("customer", self.is_customer), ("professional", self.is_professional)) if flag) or self.role
+        return f"<User {self.email} ({types})>"
+
+    @property
+    def is_admin(self):
+        return self.role == "admin"
 
 
 class ContactSubmission(db.Model):

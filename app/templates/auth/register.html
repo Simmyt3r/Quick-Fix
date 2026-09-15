@@ -12,7 +12,7 @@
         Continue with Google
       </a>
       <div class="auth-divider"><span>or sign up with email</span></div>
-      <p class="auth-note">Signing up with Google gets you a customer account — switching to a professional account is a manual step for now (see support).</p>
+      <p class="auth-note">Signing up with Google creates a customer account. You can add a professional account from Settings afterwards.</p>
     {% endif %}
 
     <form method="POST" class="auth-form" id="register-form">
@@ -30,11 +30,11 @@
       <fieldset class="role-fieldset">
         <legend>I'm signing up as a</legend>
         <label class="role-option">
-          <input type="radio" name="role" value="customer" {% if request.form.get('role', 'customer') == 'customer' %}checked{% endif %}>
+          <input type="checkbox" name="is_customer" {% if request.form.get('is_customer', 'on') == 'on' %}checked{% endif %}>
           Customer — I need a service
         </label>
         <label class="role-option">
-          <input type="radio" name="role" value="professional" {% if request.form.get('role') == 'professional' %}checked{% endif %}>
+          <input type="checkbox" name="is_professional" {% if request.form.get('is_professional') == 'on' %}checked{% endif %}>
           Professional — I offer a service
         </label>
       </fieldset>

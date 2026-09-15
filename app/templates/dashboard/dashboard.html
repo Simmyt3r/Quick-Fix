@@ -15,7 +15,13 @@
   <div class="app-topbar-inner">
     <div class="app-greeting">
       <p class="app-greeting-label">Welcome back</p>
-      <h1 class="app-greeting-name">{{ current_user.name.split(' ')[0] }} <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span></h1>
+      <h1 class="app-greeting-name">{{ current_user.name.split(' ')[0] }}
+        {% if current_user.is_admin %}<span class="role-badge role-admin">admin</span>
+        {% else %}
+          {% if current_user.is_customer %}<span class="role-badge role-customer">customer</span>{% endif %}
+          {% if current_user.is_professional %}<span class="role-badge role-professional">professional</span>{% endif %}
+        {% endif %}
+      </h1>
     </div>
     <div class="app-topbar-actions">
       <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
@@ -28,8 +34,67 @@
   </div>
 </div>
 
+{# ─────────────────────── ADMIN ─────────────────────── #}
+{% if current_user.is_admin %}
+
+  {# Stat tiles #}
+  <div class="home-banner home-banner-admin">
+    <div class="home-banner-inner"><p class="home-banner-label">Users</p><p class="home-banner-num">{{ stats.total_users }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Requests</p><p class="home-banner-num">{{ stats.total_requests }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Pending</p><p class="home-banner-num">{{ stats.pending_requests }}</p></div>
+    <div class="home-banner-inner"><p class="home-banner-label">Leads</p><p class="home-banner-num">{{ stats.total_leads }}</p></div>
+  </div>
+
+  <section class="feed-section">
+    <div class="feed-header"><h2 class="section-label">Recent requests</h2></div>
+    {% if service_requests %}
+      <ul class="feed-list">
+        {% for r in service_requests %}
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
+            <span>{{ category_icon.get(r.category, '🔧') }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ r.category }} — {{ r.customer.name }}</p>
+            <p class="feed-sub">{{ r.professional.name if r.professional else 'Unassigned' }} · {{ r.created_at.strftime('%d %b, %H:%M') }}</p>
+          </div>
+          <div class="feed-right">
+            <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-card"><p class="empty-title">No service requests yet.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="feed-section">
+    <div class="feed-header"><h2 class="section-label">Recent leads</h2></div>
+    {% if leads %}
+      <ul class="feed-list">
+        {% for lead in leads %}
+        <li class="feed-item">
+          <div class="feed-icon-wrap feed-icon-blue">
+            <span>{{ '👷' if lead.role == 'professional' else '👤' }}</span>
+          </div>
+          <div class="feed-body">
+            <p class="feed-title">{{ lead.name }} <span class="badge badge-{{ 'blue' if lead.role == 'professional' else 'green' }}">{{ lead.role | capitalize }}</span></p>
+            <p class="feed-sub">{{ lead.phone }}{% if lead.category %} · {{ lead.category }}{% endif %} · {{ lead.created_at.strftime('%d %b, %H:%M') }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-card"><p class="empty-title">No leads yet.</p></div>
+    {% endif %}
+  </section>
+
+{% else %}
+
 {# ─────────────────────── CUSTOMER ─────────────────────── #}
-{% if current_user.role == 'customer' %}
+{# A "both" account shows this section and the professional section below it. #}
+{% if current_user.is_customer %}
 
   {# Summary banner #}
   <div class="home-banner">
@@ -97,8 +162,10 @@
     {% endif %}
   </section>
 
+{% endif %}
+
 {# ─────────────────────── PROFESSIONAL ─────────────────────── #}
-{% elif current_user.role == 'professional' %}
+{% if current_user.is_professional %}
 
   {# Profile summary banner #}
   <div class="home-banner home-banner-pro">
@@ -190,61 +257,8 @@
     {% endif %}
   </section>
 
-{# ─────────────────────── ADMIN ─────────────────────── #}
-{% elif current_user.role == 'admin' %}
-
-  {# Stat tiles #}
-  <div class="home-banner home-banner-admin">
-    <div class="home-banner-inner"><p class="home-banner-label">Users</p><p class="home-banner-num">{{ stats.total_users }}</p></div>
-    <div class="home-banner-inner"><p class="home-banner-label">Requests</p><p class="home-banner-num">{{ stats.total_requests }}</p></div>
-    <div class="home-banner-inner"><p class="home-banner-label">Pending</p><p class="home-banner-num">{{ stats.pending_requests }}</p></div>
-    <div class="home-banner-inner"><p class="home-banner-label">Leads</p><p class="home-banner-num">{{ stats.total_leads }}</p></div>
-  </div>
-
-  <section class="feed-section">
-    <div class="feed-header"><h2 class="section-label">Recent requests</h2></div>
-    {% if service_requests %}
-      <ul class="feed-list">
-        {% for r in service_requests %}
-        <li class="feed-item">
-          <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
-            <span>{{ category_icon.get(r.category, '🔧') }}</span>
-          </div>
-          <div class="feed-body">
-            <p class="feed-title">{{ r.category }} — {{ r.customer.name }}</p>
-            <p class="feed-sub">{{ r.professional.name if r.professional else 'Unassigned' }} · {{ r.created_at.strftime('%d %b, %H:%M') }}</p>
-          </div>
-          <div class="feed-right">
-            <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <div class="empty-card"><p class="empty-title">No service requests yet.</p></div>
-    {% endif %}
-  </section>
-
-  <section class="feed-section">
-    <div class="feed-header"><h2 class="section-label">Recent leads</h2></div>
-    {% if leads %}
-      <ul class="feed-list">
-        {% for lead in leads %}
-        <li class="feed-item">
-          <div class="feed-icon-wrap feed-icon-blue">
-            <span>{{ '👷' if lead.role == 'professional' else '👤' }}</span>
-          </div>
-          <div class="feed-body">
-            <p class="feed-title">{{ lead.name }} <span class="badge badge-{{ 'blue' if lead.role == 'professional' else 'green' }}">{{ lead.role | capitalize }}</span></p>
-            <p class="feed-sub">{{ lead.phone }}{% if lead.category %} · {{ lead.category }}{% endif %} · {{ lead.created_at.strftime('%d %b, %H:%M') }}</p>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <div class="empty-card"><p class="empty-title">No leads yet.</p></div>
-    {% endif %}
-  </section>
+{% endif %}
 
 {% endif %}
 {% endblock %}
+

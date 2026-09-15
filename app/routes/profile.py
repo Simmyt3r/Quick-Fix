@@ -26,10 +26,18 @@ def update():
 
     current_user.name = name
 
-    if current_user.role == "professional":
+    is_customer = request.form.get("is_customer") == "on"
+    is_professional = request.form.get("is_professional") == "on"
+    if is_customer or is_professional:  # never let someone uncheck both
+        current_user.is_customer = is_customer
+        current_user.is_professional = is_professional
+
+    if current_user.is_professional:
         category = (request.form.get("category") or "").strip()
         if category in VALID_CATEGORIES:
             current_user.service_category = category
+    else:
+        current_user.service_category = None
 
     db.session.commit()
     flash("Profile updated.", "success")

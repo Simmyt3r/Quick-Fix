@@ -37,7 +37,7 @@
     {% endif %}
   </div>
 
-  {% if current_user.role == 'professional' %}
+  {% if current_user.is_professional %}
   <div class="profile-info-row">
     <span>Verification</span>
     {% if current_user.verified %}
@@ -59,11 +59,31 @@
       <input type="email" value="{{ current_user.email }}" disabled>
     </label>
 
-    {% if current_user.role == 'professional' %}
-    <label>Your trade
+    <fieldset class="role-fieldset">
+      <legend>Account type</legend>
+      <label class="role-option">
+        <input type="checkbox" name="is_customer" id="profile-is-customer" {% if current_user.is_customer %}checked{% endif %}>
+        Customer — I need a service
+      </label>
+      <label class="role-option">
+        <input type="checkbox" name="is_professional" id="profile-is-professional" {% if current_user.is_professional %}checked{% endif %}>
+        Professional — I offer a service
+      </label>
+    </fieldset>
+
+    {% if current_user.is_professional %}
+    <label id="profile-category-field" class="category-field">Your trade
       <select name="category">
         {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
           <option value="{{ cat }}" {% if cat == current_user.service_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% else %}
+    <label id="profile-category-field" class="category-field" style="display:none">Your trade
+      <select name="category">
+        {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
+          <option value="{{ cat }}">{{ cat }}</option>
         {% endfor %}
       </select>
     </label>
@@ -74,4 +94,5 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/avatar-upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/profile-role.js') }}"></script>
 {% endblock %}

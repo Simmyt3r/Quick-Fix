@@ -80,7 +80,7 @@
       </select>
     </label>
     {% else %}
-    <label id="profile-category-field" class="category-field" style="display:none">Your trade
+    <label id="profile-category-field" class="category-field is-hidden">Your trade
       <select name="category">
         {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
           <option value="{{ cat }}">{{ cat }}</option>

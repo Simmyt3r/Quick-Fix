@@ -144,7 +144,7 @@
           <div class="feed-right">
             <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
             {% if r.status == 'pending' %}
-            <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}" style="margin-top:6px">
+            <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}" class="feed-inline-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="feed-cancel">Cancel</button>
             </form>
@@ -239,7 +239,7 @@
           <div class="feed-right">
             <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
             {% if r.status == 'accepted' %}
-            <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}" style="margin-top:6px">
+            <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}" class="feed-inline-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-primary btn-sm">Done</button>
             </form>

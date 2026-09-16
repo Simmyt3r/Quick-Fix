@@ -1,0 +1,43 @@
+{% extends "base_app.html" %}
+{% block title %}Activity log — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Admin</p>
+      <h1 class="app-greeting-name">Activity log</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+<section class="feed-section">
+  <div class="feed-header"><h2 class="section-label">Recent admin actions</h2></div>
+  {% if entries %}
+    <ul class="feed-list">
+      {% for e in entries %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap feed-icon-blue">
+          <span>📋</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ e.admin.name }} — {{ e.action.replace('_', ' ') | capitalize }}{% if e.target_user %} → {{ e.target_user.name }}{% endif %}</p>
+          <p class="feed-sub">{% if e.detail %}{{ e.detail }} · {% endif %}{{ e.created_at.strftime('%d %b %Y, %H:%M') }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card"><p class="empty-title">No admin activity yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -692,7 +692,8 @@ footer{
   color:var(--ink);
 }
 .auth-form input:not([type="radio"]):not([type="checkbox"]),
-.auth-form select{
+.auth-form select,
+.auth-form textarea{
   padding:11px 14px;
   border-radius:8px;
   border:1px solid var(--line);
@@ -701,9 +702,11 @@ footer{
   font-weight:400;
   color:var(--ink);
   background:#fff;
+  resize:vertical;
 }
 .auth-form input:focus:not([type="radio"]):not([type="checkbox"]),
-.auth-form select:focus{
+.auth-form select:focus,
+.auth-form textarea:focus{
   outline:none;
   border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(0,104,183,0.15);
@@ -1368,6 +1371,14 @@ footer{
 .sidebar-link.active{ color:var(--blue); background:#EAF3FB; }
 .sidebar-link.active svg{ color:var(--blue); }
 .sidebar-link:active{ background:var(--paper-alt); }
+.sidebar-section-label{
+  padding:14px 20px 6px;
+  font-size:11.5px;
+  font-weight:700;
+  letter-spacing:0.4px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
 
 .sidebar-footer{ border-top:1px solid var(--line); padding:10px 0; flex:none; }
 .sidebar-logout{ color:var(--urgent); }
@@ -1468,3 +1479,62 @@ footer{
 .dash-form input:disabled{ background:var(--paper-alt); color:var(--muted); }
 
 .settings-heading{ margin-bottom:14px; display:block; }
+
+/* ---------- admin ---------- */
+.admin-filter-bar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:0 16px 16px;
+}
+.admin-search{
+  flex:1 1 200px;
+  min-width:140px;
+  padding:10px 14px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  font-family:'Barlow', sans-serif;
+  font-size:14.5px;
+  background:#fff;
+  color:var(--ink);
+}
+.admin-filter-bar select{
+  padding:10px 14px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  font-family:'Barlow', sans-serif;
+  font-size:14.5px;
+  background:#fff;
+  color:var(--ink);
+}
+.admin-row-actions{
+  display:flex;
+  flex-direction:row;
+  gap:8px;
+  align-items:center;
+}
+.admin-row-actions form{ margin:0; }
+.admin-reject-row{
+  list-style:none;
+  padding:0 16px 12px 68px;
+  margin-top:-8px;
+}
+.admin-reject-form{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.admin-reject-form input[type="text"]{
+  flex:1 1 220px;
+  padding:9px 12px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  font-family:'Barlow', sans-serif;
+  font-size:14px;
+}
+
+@media (max-width:600px){
+  .admin-row-actions{ flex-direction:column; align-items:stretch; }
+  .admin-reject-row{ padding-left:16px; }
+}

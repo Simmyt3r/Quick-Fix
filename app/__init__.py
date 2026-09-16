@@ -80,12 +80,14 @@ def create_app():
     from app.routes.dashboard import dashboard_bp
     from app.routes.requests import requests_bp
     from app.routes.profile import profile_bp
+    from app.routes.admin import admin_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(requests_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(admin_bp)
 
     from app.cli import create_admin
 

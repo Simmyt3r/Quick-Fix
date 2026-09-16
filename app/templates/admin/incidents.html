@@ -1,0 +1,63 @@
+{% extends "base_app.html" %}
+{% block title %}Incidents — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Admin</p>
+      <h1 class="app-greeting-name">Incidents</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="admin-filter-bar">
+  <a href="{{ url_for('admin.incidents', status='open') }}" class="btn {% if status_filter == 'open' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Open</a>
+  <a href="{{ url_for('admin.incidents', status='resolved') }}" class="btn {% if status_filter == 'resolved' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Resolved</a>
+  <a href="{{ url_for('admin.incidents', status='all') }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+  <a href="{{ url_for('admin.new_incident') }}" class="btn btn-primary btn-sm" style="margin-left:auto">+ Log incident</a>
+</div>
+
+<section class="feed-section">
+  {% if entries %}
+    <ul class="feed-list">
+      {% for i in entries %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap {% if i.status == 'open' %}feed-icon-amber{% else %}feed-icon-green{% endif %}">
+          <span>🚩</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ category_labels.get(i.category, i.category) }}{% if i.subject_user %} — {{ i.subject_user.name }}{% endif %}</p>
+          <p class="feed-sub">{{ i.note[:80] }}{% if i.note|length > 80 %}…{% endif %}</p>
+          <p class="feed-sub">Reported by {{ i.reported_by.name }} · {{ i.created_at.strftime('%d %b, %H:%M') }}{% if i.service_request %} · request #{{ i.service_request.id }}{% endif %}</p>
+        </div>
+        <div class="feed-right">
+          <span class="badge badge-{{ 'amber' if i.status == 'open' else 'green' }}">{{ i.status | capitalize }}</span>
+          {% if i.status == 'open' %}
+          <form method="POST" action="{{ url_for('admin.resolve_incident', incident_id=i.id) }}" style="margin-top:6px">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-sm">Resolve</button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card">
+      <p class="empty-icon">🚩</p>
+      <p class="empty-title">No {{ status_filter if status_filter != 'all' else '' }} incidents</p>
+      <p class="empty-body">Reports about no-shows, disputes, or complaints will show up here.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base_app.html" %}
+{% block title %}Log incident — QuickFix Nearby{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <h1>Log an incident</h1>
+    <p class="auth-sub">No-shows, disputes, or complaints — tied to a user and/or a service request.</p>
+
+    <form method="POST" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label>Category
+        <select name="category">
+          {% for cat in categories %}
+          <option value="{{ cat }}">{{ category_labels[cat] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>User ID (optional — the affected customer or professional)
+        <input type="number" name="subject_user_id" value="{{ prefill_user_id }}" min="1">
+      </label>
+
+      <label>Service request ID (optional)
+        <input type="number" name="service_request_id" value="{{ prefill_request_id }}" min="1">
+      </label>
+
+      <label>What happened
+        <textarea name="note" rows="4" required maxlength="2000" placeholder="Describe the incident"></textarea>
+      </label>
+
+      <button type="submit" class="btn btn-primary">Log incident</button>
+    </form>
+    <p class="auth-foot"><a href="{{ url_for('admin.incidents') }}">Back to incidents</a></p>
+  </div>
+</div>
+{% endblock %}

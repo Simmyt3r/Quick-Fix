@@ -1,0 +1,67 @@
+{% extends "base_app.html" %}
+{% block title %}Verification queue — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Admin</p>
+      <h1 class="app-greeting-name">Verification queue</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+<section class="feed-section">
+  <div class="feed-header">
+    <h2 class="section-label">Pending professionals</h2>
+    {% if pending %}<span class="feed-count">{{ pending | length }}</span>{% endif %}
+  </div>
+
+  {% if pending %}
+    <ul class="feed-list">
+      {% for u in pending %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap feed-icon-amber">
+          <span>👷</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ u.name }}</p>
+          <p class="feed-sub">{{ u.email }} · {{ u.service_category or 'No trade set' }} · joined {{ u.created_at.strftime('%d %b %Y') }}</p>
+        </div>
+        <div class="feed-right admin-row-actions">
+          <form method="POST" action="{{ url_for('admin.approve_professional', user_id=u.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+          </form>
+          <button type="button" class="btn btn-ghost btn-sm" data-reject-toggle="{{ u.id }}">Reject</button>
+        </div>
+      </li>
+      <li class="admin-reject-row" id="reject-row-{{ u.id }}" hidden>
+        <form method="POST" action="{{ url_for('admin.reject_professional', user_id=u.id) }}" class="admin-reject-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="text" name="reason" placeholder="Reason (optional, kept in the activity log)" maxlength="255">
+          <button type="submit" class="btn btn-ghost btn-sm">Confirm reject</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card">
+      <p class="empty-icon">✅</p>
+      <p class="empty-title">Nothing pending</p>
+      <p class="empty-body">Every professional account is verified or has none waiting.</p>
+    </div>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='js/admin-reject-toggle.js') }}"></script>
+{% endblock %}

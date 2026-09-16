@@ -85,6 +85,9 @@ def accept(request_id):
     if not current_user.is_professional:
         flash("Only professional accounts can accept jobs.", "error")
         return redirect(url_for("dashboard.home"))
+    if not current_user.verified:
+        flash("Your professional account needs to be verified before you can accept jobs.", "error")
+        return redirect(url_for("dashboard.home"))
 
     job = ServiceRequest.query.get_or_404(request_id)
 

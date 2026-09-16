@@ -78,6 +78,9 @@ def login():
         if user is None or not user.check_password(password):
             flash("Incorrect email or password.", "error")
             return render_template("auth/login.html"), 401
+        if user.disabled:
+            flash("This account has been disabled. Contact support if you think that's a mistake.", "error")
+            return render_template("auth/login.html"), 403
 
         login_user(user)
         flash(f"Welcome back, {user.name.split(' ')[0]}.", "success")
@@ -160,6 +163,10 @@ def google_callback():
             is_new_account = True
         user.google_id = google_id
         db.session.commit()
+
+    if user.disabled:
+        flash("This account has been disabled. Contact support if you think that's a mistake.", "error")
+        return redirect(url_for("auth.login"))
 
     login_user(user)
     first_name = user.name.split(" ")[0] if user.name else "there"

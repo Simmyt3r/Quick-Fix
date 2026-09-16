@@ -45,6 +45,28 @@
     <div class="home-banner-inner"><p class="home-banner-label">Leads</p><p class="home-banner-num">{{ stats.total_leads }}</p></div>
   </div>
 
+  <section class="tile-section">
+    <h2 class="section-label">Admin tools</h2>
+    <div class="tile-grid">
+      <a href="{{ url_for('admin.verification_queue') }}" class="tile">
+        <span class="tile-icon">✅</span>
+        <span class="tile-label">Verification{% if stats.pending_verification %} ({{ stats.pending_verification }}){% endif %}</span>
+      </a>
+      <a href="{{ url_for('admin.users') }}" class="tile">
+        <span class="tile-icon">👥</span>
+        <span class="tile-label">Users</span>
+      </a>
+      <a href="{{ url_for('admin.incidents') }}" class="tile">
+        <span class="tile-icon">🚩</span>
+        <span class="tile-label">Incidents{% if stats.open_incidents %} ({{ stats.open_incidents }}){% endif %}</span>
+      </a>
+      <a href="{{ url_for('admin.activity') }}" class="tile">
+        <span class="tile-icon">📋</span>
+        <span class="tile-label">Activity log</span>
+      </a>
+    </div>
+  </section>
+
   <section class="feed-section">
     <div class="feed-header"><h2 class="section-label">Recent requests</h2></div>
     {% if service_requests %}

@@ -1,0 +1,94 @@
+{% extends "base_app.html" %}
+{% block title %}Users — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Admin</p>
+      <h1 class="app-greeting-name">Users</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+<form method="GET" class="admin-filter-bar">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search name or email" class="admin-search">
+  <select name="role">
+    <option value="" {% if not role_filter %}selected{% endif %}>All roles</option>
+    <option value="customer" {% if role_filter == 'customer' %}selected{% endif %}>Customer</option>
+    <option value="professional" {% if role_filter == 'professional' %}selected{% endif %}>Professional</option>
+    <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+  </select>
+  <select name="status">
+    <option value="" {% if not status_filter %}selected{% endif %}>Any status</option>
+    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+    <option value="disabled" {% if status_filter == 'disabled' %}selected{% endif %}>Disabled</option>
+    <option value="unverified_pro" {% if status_filter == 'unverified_pro' %}selected{% endif %}>Unverified pro</option>
+  </select>
+  <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+</form>
+
+<section class="feed-section">
+  <div class="feed-header">
+    <h2 class="section-label">Results</h2>
+    <span class="feed-count">{{ results | length }}</span>
+  </div>
+
+  {% if results %}
+    <ul class="feed-list">
+      {% for u in results %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap {% if u.disabled %}feed-icon-muted{% elif u.is_admin %}feed-icon-blue{% else %}feed-icon-green{% endif %}">
+          <span>{{ u.name[0]|upper }}</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">
+            {{ u.name }}
+            {% if u.disabled %}<span class="badge badge-muted">Disabled</span>{% endif %}
+            {% if u.is_admin %}<span class="role-badge role-admin">admin</span>{% endif %}
+            {% if u.is_customer %}<span class="role-badge role-customer">customer</span>{% endif %}
+            {% if u.is_professional %}<span class="role-badge role-professional">professional{% if not u.verified %} · unverified{% endif %}</span>{% endif %}
+          </p>
+          <p class="feed-sub">{{ u.email }} · joined {{ u.created_at.strftime('%d %b %Y') }}</p>
+        </div>
+        <div class="feed-right admin-row-actions">
+          {% if not u.is_admin and u.id != current_user.id %}
+            {% if u.disabled %}
+            <form method="POST" action="{{ url_for('admin.enable_user', user_id=u.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-sm">Enable</button>
+            </form>
+            {% else %}
+            <button type="button" class="btn btn-ghost btn-sm" data-disable-toggle="{{ u.id }}">Disable</button>
+            {% endif %}
+          {% endif %}
+          <a href="{{ url_for('admin.new_incident', user_id=u.id) }}" class="btn btn-ghost btn-sm">Log incident</a>
+        </div>
+      </li>
+      {% if not u.is_admin and u.id != current_user.id and not u.disabled %}
+      <li class="admin-reject-row" id="disable-row-{{ u.id }}" hidden>
+        <form method="POST" action="{{ url_for('admin.disable_user', user_id=u.id) }}" class="admin-reject-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="text" name="reason" placeholder="Reason (optional, kept in the activity log)" maxlength="255">
+          <button type="submit" class="btn btn-ghost btn-sm">Confirm disable</button>
+        </form>
+      </li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card"><p class="empty-title">No users match that search.</p></div>
+  {% endif %}
+</section>
+
+<script src="{{ url_for('static', filename='js/admin-disable-toggle.js') }}"></script>
+{% endblock %}

@@ -30,6 +30,11 @@ class User(UserMixin, db.Model):
     service_category = db.Column(db.String(50), nullable=True)
     verified = db.Column(db.Boolean, nullable=False, default=False)
 
+    # Admin-managed account status. A disabled user can't log in (password
+    # or Google) and their open service requests/leads stop surfacing to
+    # professionals — see auth.py and dashboard.py.
+    disabled = db.Column(db.Boolean, nullable=False, default=False)
+
     avatar_url = db.Column(db.String(500), nullable=True)  # Cloudinary secure_url
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -90,6 +95,61 @@ class ServiceRequest(db.Model):
         return f"<ServiceRequest {self.id} {self.category} {self.status}>"
 
 
+class Incident(db.Model):
+    """An admin-facing report attached to a user and/or a service request —
+    e.g. a no-show, a payment dispute, or a complaint. Not raised by
+    customers/professionals themselves yet (no public report form); admins
+    log these directly for now."""
+
+    __tablename__ = "incidents"
+
+    id = db.Column(db.Integer, primary_key=True)
+    reported_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    subject_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    service_request_id = db.Column(db.Integer, db.ForeignKey("service_requests.id"), nullable=True)
+
+    category = db.Column(db.String(30), nullable=False)  # no_show | dispute | complaint | other
+    note = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="open")  # open | resolved
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+
+    reported_by = db.relationship("User", foreign_keys=[reported_by_id])
+    subject_user = db.relationship("User", foreign_keys=[subject_user_id])
+    service_request = db.relationship("ServiceRequest")
+
+    def __repr__(self):
+        return f"<Incident {self.id} {self.category} {self.status}>"
+
+
+class AdminAction(db.Model):
+    """Audit trail of admin actions — who did what, to whom, when. Written
+    automatically by admin routes (verify, disable, resolve incident, etc.),
+    never edited or deleted through the app."""
+
+    __tablename__ = "admin_actions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # e.g. "verify_professional", "disable_user"
+    target_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    target_incident_id = db.Column(db.Integer, db.ForeignKey("incidents.id"), nullable=True)
+    detail = db.Column(db.String(255), nullable=True)  # short human-readable context, no PII beyond what's already on-screen
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    admin = db.relationship("User", foreign_keys=[admin_id])
+    target_user = db.relationship("User", foreign_keys=[target_user_id])
+    target_incident = db.relationship("Incident")
+
+    def __repr__(self):
+        return f"<AdminAction {self.action} by {self.admin_id}>"
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    user = User.query.get(int(user_id))
+    if user is not None and user.disabled:
+        return None  # forces Flask-Login to treat the session as logged out
+    return user

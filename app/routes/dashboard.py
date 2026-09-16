@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
-from app.models import ContactSubmission, ServiceRequest, User
+from app.models import ContactSubmission, Incident, ServiceRequest, User
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -27,6 +27,10 @@ def home():
             "total_leads": ContactSubmission.query.count(),
             "total_requests": ServiceRequest.query.count(),
             "pending_requests": ServiceRequest.query.filter_by(status="pending").count(),
+            "pending_verification": User.query.filter_by(
+                is_professional=True, verified=False, disabled=False
+            ).count(),
+            "open_incidents": Incident.query.filter_by(status="open").count(),
         }
         return render_template("dashboard/dashboard.html", **context)
 

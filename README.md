@@ -4,7 +4,7 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page, lead capture, email/password + Google auth, a mobile-first PWA dashboard (tile grid, bottom nav, slide-out sidebar with Profile/Settings), and the core booking loop (customers request a service, matching professionals accept and complete it) are all live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, security headers, and Cloudinary-backed profile photos in place. See [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password + Google auth, a mobile-first PWA dashboard (tile grid, bottom nav, slide-out sidebar with Profile/Settings), and the core booking loop (customers request a service, matching professionals accept and complete it) are all live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, security headers, and Cloudinary-backed profile photos in place. Accounts can be customer, professional, or both at once. **End-to-end smoke-tested on the live production site (quickfixnearby.vercel.app) on 2026-09-16 — registration (including a dual-role account), login, and dashboard all confirmed working against the real Neon database.** See [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
@@ -61,7 +61,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 Implemented so far (Phase 2 in progress) — a unified `users` table plus separate leads and service-request tables; a couple of role-specific tables are still planned:
 
-- **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, role (customer / professional / admin), service_category, verified, avatar_url, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
+- **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, is_customer, is_professional (independent flags — an account can be either or both), role (admin-only flag; not used for customer/professional anymore), service_category, verified, avatar_url, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
 - **contact_submissions** *(live)* — landing-page leads from `/leads`, shown on professional dashboards (filtered by category) and the admin dashboard (all leads)
 - **service_requests** *(live)* — id, customer_id, professional_id (nullable until accepted), category, description, location, urgency, status (pending / accepted / completed / cancelled), created_at, updated_at. Both `customer_id` and `professional_id` are foreign keys to `users.id`.
 - **customers** *(planned)* — id, user_id, phone, location
@@ -91,7 +91,7 @@ Quick-Fix/
 │   │   └── profile.py        # "/profile", "/profile/update", "/profile/avatar", "/profile/settings"
 │   ├── static/
 │   │   ├── css/style.css
-│   │   ├── js/                # sidebar.js, avatar-upload.js, register.js
+│   │   ├── js/                # sidebar.js, avatar-upload.js, register.js, profile-role.js, service-worker-register.js
 │   │   ├── manifest.webmanifest, sw.js  # PWA
 │   │   └── logo.png
 │   └── templates/

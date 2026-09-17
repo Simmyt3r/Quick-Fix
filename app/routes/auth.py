@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from secrets import token_urlsafe
 from urllib.parse import urlparse
 
 import requests
@@ -6,9 +8,12 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.extensions import db, limiter, oauth
+from app.mail import send_email
 from app.models import User
 
 auth_bp = Blueprint("auth", __name__)
+
+RESET_TOKEN_TTL = timedelta(hours=1)
 
 def _safe_next(target):
     """Only follow `next` if it's a relative, same-site path — never an open redirect."""
@@ -95,6 +100,105 @@ def logout():
     logout_user()
     flash("You've been logged out.", "success")
     return redirect(url_for("main.index"))
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard.home"))
+
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        user = User.query.filter_by(email=email).first()
+
+        # Always show the same message whether or not the account exists, or
+        # whether it even has a password — telling someone "no account with
+        # that email" or "that account uses Google" from this form is an
+        # account-enumeration leak. The right message for either case goes
+        # in the email itself, sent only to the real inbox.
+        if user is not None and not user.disabled:
+            if user.password_hash is None:
+                send_email(
+                    user.email,
+                    "Password reset — QuickFix Nearby",
+                    f"Hi {user.name.split(' ')[0]},\n\n"
+                    "Someone (hopefully you) requested a password reset for this "
+                    "email on QuickFix Nearby. This account signs in with Google, "
+                    "though, so there's no password to reset — just use the "
+                    '"Continue with Google" button on the login page.\n\n'
+                    "If this wasn't you, no action is needed.\n\n"
+                    "— QuickFix Nearby",
+                )
+            else:
+                user.reset_token = token_urlsafe(32)
+                user.reset_token_expires = datetime.utcnow() + RESET_TOKEN_TTL
+                db.session.commit()
+
+                reset_url = url_for("auth.reset_password", token=user.reset_token, _external=True)
+                sent = send_email(
+                    user.email,
+                    "Password reset — QuickFix Nearby",
+                    f"Hi {user.name.split(' ')[0]},\n\n"
+                    "Someone (hopefully you) requested a password reset for this "
+                    "email on QuickFix Nearby. This link works for 1 hour:\n\n"
+                    f"{reset_url}\n\n"
+                    "If this wasn't you, no action is needed — your password "
+                    "stays the same.\n\n"
+                    "— QuickFix Nearby",
+                )
+                if not sent:
+                    # SMTP isn't configured (e.g. local dev) — log the link so
+                    # the flow is still testable without real email delivery.
+                    current_app.logger.info("Password reset link for %s: %s", user.email, reset_url)
+
+        flash(
+            "If an account exists for that email, we've sent a link to reset the password.",
+            "success",
+        )
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/forgot_password.html")
+
+
+@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+@limiter.limit("10 per hour", methods=["POST"])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard.home"))
+
+    user = User.query.filter_by(reset_token=token).first()
+    token_valid = (
+        user is not None
+        and not user.disabled
+        and user.reset_token_expires is not None
+        and user.reset_token_expires > datetime.utcnow()
+    )
+
+    if not token_valid:
+        flash("That reset link is invalid or has expired. Request a new one below.", "error")
+        return redirect(url_for("auth.forgot_password"))
+
+    if request.method == "POST":
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm_password") or ""
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.", "error")
+            return render_template("auth/reset_password.html", token=token), 400
+        if password != confirm:
+            flash("Those passwords don't match.", "error")
+            return render_template("auth/reset_password.html", token=token), 400
+
+        user.set_password(password)
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
+
+        flash("Your password has been reset. Please log in.", "success")
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/reset_password.html", token=token)
 
 
 @auth_bp.route("/login/google")

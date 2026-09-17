@@ -71,6 +71,10 @@ def create_app():
 
     init_cloudinary(app)
 
+    from app.mail import init_mail
+
+    init_mail(app)
+
     from app import models  # noqa: F401 — register models before Migrate/db touch anything
 
     migrate.init_app(app, db)

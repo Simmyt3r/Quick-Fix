@@ -720,6 +720,13 @@ footer{
 }
 .auth-foot a{ color:var(--blue); font-weight:600; text-decoration:none; }
 .auth-foot a:hover{ text-decoration:underline; }
+.auth-forgot{
+  margin:-6px 0 4px;
+  text-align:right;
+  font-size:13.5px;
+}
+.auth-forgot a{ color:var(--blue); font-weight:600; text-decoration:none; }
+.auth-forgot a:hover{ text-decoration:underline; }
 
 .role-fieldset{
   border:1px solid var(--line);

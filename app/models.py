@@ -37,6 +37,13 @@ class User(UserMixin, db.Model):
 
     avatar_url = db.Column(db.String(500), nullable=True)  # Cloudinary secure_url
 
+    # Password reset. token is a random URL-safe string, not a signed JWT —
+    # storing it lets us make it genuinely single-use (cleared on success)
+    # and revocable, rather than relying purely on a signature's expiry.
+    # Nullable: most users have no reset in flight most of the time.
+    reset_token = db.Column(db.String(100), nullable=True, unique=True, index=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

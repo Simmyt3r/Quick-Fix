@@ -13,12 +13,14 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Cloudinary credentials added to Vercel env vars (`CLOUDINARY_CLOUD_NAME`/`API_KEY`/`API_SECRET`) — wired up in `app/uploads.py`, currently used for profile photos
 
 ## Phase 2 — Data models
-- [x] `users` — id, name, email, password_hash, is_customer, is_professional, role (admin-only flag now — see below), service_category, verified, created_at, updated_at — **role migrated from a single customer/professional/admin string to two independent booleans, `is_customer` and `is_professional`, so an account can be both at once; `role` is kept solely to flag admins (2026-09-15, migration `b159fdb92b59`)**
+- [x] `users` — id, name, email, password_hash, is_customer, is_professional, role (admin-only flag now — see below), service_category, verified, disabled, created_at, updated_at — **role migrated from a single customer/professional/admin string to two independent booleans, `is_customer` and `is_professional`, so an account can be both at once; `role` is kept solely to flag admins (2026-09-15, migration `b159fdb92b59`)**. `disabled` added 2026-09-17 (migration `c3097a33c5be`) — an admin-managed account-status flag, enforced at login and mid-session (see Phase 6).
 - [ ] Split professional-only fields (`service_category`, `verified`) into a dedicated `professionals` table with coverage_area, rating, total_jobs, etc., per README's data model
 - [ ] `customers` — id, user_id, phone, location
 - [x] `service_requests` — id, customer_id, professional_id, category, description, location, urgency, status, created_at, updated_at — live, with FK relationships to `users` for both customer and professional
 - [x] `contact_submissions` — landing-page leads, persisted via `/leads` and surfaced on professional/admin dashboards
 - [x] `users.avatar_url` — Cloudinary-hosted profile photo, nullable (falls back to an initial-letter avatar in the UI)
+- [x] `incidents` — id, reported_by_id, subject_user_id, service_request_id, category, note, status, created_at, resolved_at (2026-09-17, migration `c3097a33c5be`) — see Phase 6
+- [x] `admin_actions` — id, admin_id, action, target_user_id, target_incident_id, detail, created_at (2026-09-17, migration `c3097a33c5be`) — audit trail, see Phase 6
 
 ## Phase 3 — Auth
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
@@ -42,11 +44,13 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [ ] Earnings + job history dashboard (jobs list exists; no earnings/payment tracking yet)
 
 ## Phase 6 — Admin
-- [x] Basic dashboard — user/lead/service-request counts, recent leads table, recent service requests table (with customer + assigned professional names)
+- [x] Basic dashboard — user/lead/service-request counts, recent leads table, recent service requests table (with customer + assigned professional names); admin dashboard now also has quick-action tiles (Verification / Users / Incidents / Activity log) with live pending-verification and open-incident counts
 - [x] `flask create-admin` CLI command (no public admin signup)
-- [ ] Provider approval / verification review queue (flip `verified` from the dashboard instead of the DB directly) — note: `verified` currently isn't enforced anywhere, an unverified pro can still accept jobs
-- [ ] Incident tracking
-- [ ] Full reporting dashboard
+- [x] Provider approval / verification review queue — `/admin/verification`, approve/reject with an optional reason. `verified` is now actually enforced: `requests.py` blocks an unverified professional from accepting a job (2026-09-17, migration `c3097a33c5be`)
+- [x] User management — `/admin/users`: search by name/email, filter by role and status, disable/re-enable accounts. A disabled user is blocked at both login paths (password and Google) and their *existing* session is killed on the next request (via the `user_loader` hook returning `None`), not just blocked at login. Admins can't disable themselves or other admins from this screen.
+- [x] Incident tracking — `/admin/incidents`, `/admin/incidents/new`: a report (category: no-show / dispute / complaint / other, a note, open/resolved status) attachable to a user and/or a service request. Linkable from the users list ("Log incident" on any row). No public report form yet — admins log these directly, not customers/professionals themselves.
+- [x] Admin action audit log — `/admin/activity`: every admin action above (verify, reject, disable, enable, log incident, resolve incident) is recorded automatically via a `log_action()` helper — who did what, to whom, when
+- [ ] Full reporting dashboard beyond the counts/tiles above (e.g. trends over time, exportable data) — the basics (counts, recent activity, filterable user list) now exist; this item is for anything beyond that
 
 ## Phase 7 — Frontend
 - [x] Marketing landing page (`app/templates/index.html`), served via Flask (`GET /`)
@@ -76,6 +80,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Decided how migrations run in production — `.github/workflows/migrate.yml`, manually triggered (`workflow_dispatch`) against a `DATABASE_URL` repo secret. First run failed, second succeeded (2026-09-13) — **worth glancing at the failed run's logs once to understand why, so it doesn't repeat on the next schema change**
 - [x] **Confirm the GitHub Actions `DATABASE_URL` secret and the Vercel `DATABASE_URL` env var point at the same Neon database** — ✅ confirmed indirectly: registration on the live site succeeds (would fail with "relation does not exist" if they pointed at different databases), and 0 errors in Vercel runtime logs during the test window (2026-09-16)
 - [x] Full post-deploy smoke test — confirmed end-to-end on the live site (2026-09-16): registered a real account choosing both the customer and professional roles (dual-role account), login and dashboard both worked, 0 errors in Vercel runtime logs during the window
+- [x] Admin features migration (`c3097a33c5be`) applied to production and verified clean — triggered `migrate.yml` immediately after the push, polled to completion, confirmed 0 errors in Vercel runtime logs and a healthy homepage fetch afterward (2026-09-17). This is now the standing practice for every schema-changing push, not a one-off.
 - [ ] Replace Flask-Limiter's in-memory storage with a shared backend (e.g. Upstash Redis) before relying on rate limits in production — each serverless instance currently tracks its own counters
 - [ ] Basic monitoring / error tracking
 

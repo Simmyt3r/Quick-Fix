@@ -4,12 +4,12 @@
 
 A marketplace platform connecting customers with verified, on-demand service professionals — electricians, plumbers, mechanics, builders, barbers, and more — across Nigeria.
 
-**Status:** early MVP. The landing page, lead capture, email/password + Google auth, a mobile-first PWA dashboard (tile grid, bottom nav, slide-out sidebar with Profile/Settings), and the core booking loop (customers request a service, matching professionals accept and complete it) are all live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, security headers, and Cloudinary-backed profile photos in place. Accounts can be customer, professional, or both at once. **End-to-end smoke-tested on the live production site (quickfixnearby.vercel.app) on 2026-09-16 — registration (including a dual-role account), login, and dashboard all confirmed working against the real Neon database.** See [`TODO.md`](TODO.md) for exactly what's built vs. planned.
+**Status:** early MVP. The landing page, lead capture, email/password + Google auth, a mobile-first PWA dashboard (tile grid, bottom nav, slide-out sidebar with Profile/Settings), the core booking loop (customers request a service, matching professionals accept and complete it), and a full admin suite (professional verification queue, user management with disable/enable, incident logging, and an audit log) are all live, backed by Postgres via SQLAlchemy + Flask-Migrate, with CSRF protection, rate limiting, security headers, and Cloudinary-backed profile photos in place. Accounts can be customer, professional, or both at once. **End-to-end smoke-tested on the live production site (quickfixnearby.vercel.app) on 2026-09-16 — registration (including a dual-role account), login, and dashboard all confirmed working against the real Neon database.** See [`TODO.md`](TODO.md) for exactly what's built vs. planned.
 
 ## Overview
 
 - **24/7 service booking** — customers request services anytime, specifying category, description, location, and urgency; matching professionals accept and complete the job — live
-- **Verified professionals** — providers get a verification badge (manual for now — no review queue yet) and only see requests in their own trade
+- **Verified professionals** — providers get a verification badge, reviewed and approved by an admin through a dedicated queue (`/admin/verification`); unverified professionals are blocked from accepting jobs
 - **Live dashboard** — full request lifecycle (pending → accepted → completed/cancelled) tracked for customers, professionals, and admins
 - **Secure by default** — hashed credentials, CSRF-protected forms, rate-limited auth/lead endpoints, and a strict CSP
 
@@ -19,7 +19,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 |---|---|
 | Backend | Python, Flask |
 | Hosting / deploy | Vercel (serverless functions) |
-| Database | Postgres (Neon-ready) via SQLAlchemy + Flask-Migrate — schema-managed, not yet pointed at a real Neon project |
+| Database | Postgres (Neon) via SQLAlchemy + Flask-Migrate — live at quickfixnearby.vercel.app, migrations applied via a manually-triggered GitHub Actions workflow |
 | Media storage | Cloudinary — not yet integrated |
 | AI / ML | Hugging Face Inference API — not yet integrated |
 | Auth | Flask-Login — email/password (hashed) and Google OAuth (Authlib), both live |
@@ -29,7 +29,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 1. **Customer booking** *(live)* — category selection, description, location, urgency; status tracking and self-service cancellation. Scheduling (a specific date/time, vs. just urgency) is still planned.
 2. **Professional management** *(partial)* — accept/complete jobs in your own trade, verification badge display. Availability toggle, coverage area, ratings, and earnings are still planned.
-3. **Admin controls** *(partial)* — dashboard with user/request/lead stats and recent activity tables. Provider approval queue, incident tracking, and deeper reporting are still planned.
+3. **Admin controls** *(live)* — dashboard with user/request/lead stats and recent activity tables; a verification queue to approve/reject professionals; user management with search, filtering, and account disable/enable; incident logging (no-shows, disputes, complaints) tied to a user and/or service request; and a full audit log of every admin action. Deeper reporting (trends, exports) beyond the current counts/tables is still planned.
 
 ### Service categories
 
@@ -61,9 +61,11 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 Implemented so far (Phase 2 in progress) — a unified `users` table plus separate leads and service-request tables; a couple of role-specific tables are still planned:
 
-- **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, is_customer, is_professional (independent flags — an account can be either or both), role (admin-only flag; not used for customer/professional anymore), service_category, verified, avatar_url, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table.
+- **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, is_customer, is_professional (independent flags — an account can be either or both), role (admin-only flag; not used for customer/professional anymore), service_category, verified, disabled, avatar_url, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table. `disabled` is admin-managed account status — a disabled user is blocked at login and any active session is killed on their next request.
 - **contact_submissions** *(live)* — landing-page leads from `/leads`, shown on professional dashboards (filtered by category) and the admin dashboard (all leads)
 - **service_requests** *(live)* — id, customer_id, professional_id (nullable until accepted), category, description, location, urgency, status (pending / accepted / completed / cancelled), created_at, updated_at. Both `customer_id` and `professional_id` are foreign keys to `users.id`.
+- **incidents** *(live)* — id, reported_by_id, subject_user_id, service_request_id, category (no_show / dispute / complaint / other), note, status (open / resolved), created_at, resolved_at. An admin-logged report attachable to a user and/or a service request.
+- **admin_actions** *(live)* — id, admin_id, action, target_user_id, target_incident_id, detail, created_at. Audit trail — every admin action (verify, reject, disable, enable, log incident, resolve incident) is recorded automatically.
 - **customers** *(planned)* — id, user_id, phone, location
 - **professionals** *(planned)* — id, user_id, service_type, verified, rating, total_jobs, coverage_area — will absorb `service_category`/`verified` off of `users`
 
@@ -78,7 +80,7 @@ Quick-Fix/
 ├── app/
 │   ├── __init__.py           # Flask app factory
 │   ├── extensions.py         # db, login_manager, migrate, csrf, limiter, oauth
-│   ├── models.py             # User, ContactSubmission, ServiceRequest
+│   ├── models.py             # User, ContactSubmission, ServiceRequest, Incident, AdminAction
 │   ├── cli.py                # `flask create-admin`
 │   ├── security.py           # response security headers (CSP, etc.)
 │   ├── errors.py             # CSRF/rate-limit/payload-too-large error handlers
@@ -88,17 +90,18 @@ Quick-Fix/
 │   │   ├── auth.py           # "/register", "/login", "/logout", Google OAuth
 │   │   ├── dashboard.py      # "/dashboard" (role-aware)
 │   │   ├── requests.py       # "/requests/new", "/accept", "/complete", "/cancel"
-│   │   └── profile.py        # "/profile", "/profile/update", "/profile/avatar", "/profile/settings"
+│   │   ├── profile.py        # "/profile", "/profile/update", "/profile/avatar", "/profile/settings"
+│   │   └── admin.py          # "/admin/verification", "/admin/users", "/admin/incidents", "/admin/activity"
 │   ├── static/
 │   │   ├── css/style.css
-│   │   ├── js/                # sidebar.js, avatar-upload.js, register.js, profile-role.js, service-worker-register.js
+│   │   ├── js/                # sidebar.js, avatar-upload.js, register.js, profile-role.js, service-worker-register.js, admin-reject-toggle.js, admin-disable-toggle.js
 │   │   ├── manifest.webmanifest, sw.js  # PWA
 │   │   └── logo.png
 │   └── templates/
 │       ├── index.html        # Marketing landing page
 │       ├── base_app.html     # Shared shell — sidebar, bottom nav, flash messages
-│       ├── _sidebar.html     # Slide-out drawer (mobile) / persistent rail (desktop)
-│       ├── auth/, dashboard/, requests/, profile/
+│       ├── _sidebar.html     # Slide-out drawer (mobile) / persistent rail (desktop) — Admin section visible only to admins
+│       ├── auth/, dashboard/, requests/, profile/, admin/
 ├── migrations/                # Flask-Migrate/Alembic — `flask db upgrade`
 ├── .github/workflows/migrate.yml  # Manually-triggered `flask db upgrade` against production
 ├── requirements.txt

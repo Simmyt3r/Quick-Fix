@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
-from app.models import ServiceRequest
+from app.models import Review, ServiceRequest
 
 requests_bp = Blueprint("requests", __name__, url_prefix="/requests")
 
@@ -122,4 +122,44 @@ def complete(request_id):
     db.session.commit()
 
     flash("Nice work — job marked complete.", "success")
+    return redirect(url_for("dashboard.home"))
+
+
+@requests_bp.route("/<int:request_id>/review", methods=["POST"])
+@login_required
+@limiter.limit("20 per hour", methods=["POST"])
+def review(request_id):
+    job = ServiceRequest.query.get_or_404(request_id)
+
+    if job.customer_id != current_user.id:
+        flash("You can only review your own requests.", "error")
+        return redirect(url_for("dashboard.home"))
+    if job.status != "completed":
+        flash("You can only review a job once it's marked complete.", "error")
+        return redirect(url_for("dashboard.home"))
+    if job.review is not None:
+        flash("You've already reviewed this job.", "error")
+        return redirect(url_for("dashboard.home"))
+
+    try:
+        rating = int(request.form.get("rating") or 0)
+    except ValueError:
+        rating = 0
+    comment = (request.form.get("comment") or "").strip() or None
+
+    if rating < 1 or rating > 5:
+        flash("Please choose a rating from 1 to 5 stars.", "error")
+        return redirect(url_for("dashboard.home"))
+
+    entry = Review(
+        service_request_id=job.id,
+        customer_id=current_user.id,
+        professional_id=job.professional_id,
+        rating=rating,
+        comment=comment,
+    )
+    db.session.add(entry)
+    db.session.commit()
+
+    flash("Thanks for the feedback!", "success")
     return redirect(url_for("dashboard.home"))

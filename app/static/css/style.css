@@ -1545,3 +1545,58 @@ footer{
   .admin-row-actions{ flex-direction:column; align-items:stretch; }
   .admin-reject-row{ padding-left:16px; }
 }
+
+/* ---------- reviews ---------- */
+.feed-stars{
+  color:var(--amber, #F5B51B);
+  font-size:14px;
+  letter-spacing:1px;
+}
+.review-form{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.review-form input[type="text"]{
+  flex:1 1 200px;
+  padding:9px 12px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  font-family:'Barlow', sans-serif;
+  font-size:14px;
+}
+
+/* Star picker: radios reversed in markup (5..1) so the CSS-only
+   checked-and-following-siblings trick highlights the right stars on
+   hover/selection without JS. */
+.star-picker{
+  display:flex;
+  flex-direction:row-reverse;
+  border:none;
+  padding:0;
+  margin:0;
+  gap:2px;
+}
+.star-picker input{
+  position:absolute;
+  opacity:0;
+  width:1px;
+  height:1px;
+}
+.star-picker label{
+  font-size:22px;
+  line-height:1;
+  color:var(--line);
+  cursor:pointer;
+  padding:2px;
+}
+.star-picker input:checked ~ label,
+.star-picker label:hover,
+.star-picker label:hover ~ label{
+  color:var(--amber, #F5B51B);
+}
+
+@media (max-width:600px){
+  .review-form{ flex-direction:column; align-items:stretch; }
+}

@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
-from app.models import ContactSubmission, Incident, ServiceRequest, User
+from app.extensions import db
+from app.models import ContactSubmission, Incident, Review, ServiceRequest, User
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -72,5 +73,13 @@ def home():
             if current_user.service_category
             else []
         )
+
+        rating_agg = (
+            db.session.query(db.func.avg(Review.rating), db.func.count(Review.id))
+            .filter(Review.professional_id == current_user.id)
+            .one()
+        )
+        context["avg_rating"] = round(rating_agg[0], 1) if rating_agg[0] is not None else None
+        context["review_count"] = rating_agg[1]
 
     return render_template("dashboard/dashboard.html", **context)

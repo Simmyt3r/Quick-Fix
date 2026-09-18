@@ -102,6 +102,34 @@ class ServiceRequest(db.Model):
         return f"<ServiceRequest {self.id} {self.category} {self.status}>"
 
 
+class Review(db.Model):
+    """A customer's rating of a completed job. One review per service
+    request — reviewing is customer-to-professional only for now; if
+    two-way reviews are ever added, add a `direction` column rather than
+    reusing this table's one-row-per-request assumption."""
+
+    __tablename__ = "reviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_request_id = db.Column(
+        db.Integer, db.ForeignKey("service_requests.id"), nullable=False, unique=True
+    )
+    customer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    professional_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    comment = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    service_request = db.relationship("ServiceRequest", backref=db.backref("review", uselist=False))
+    customer = db.relationship("User", foreign_keys=[customer_id])
+    professional = db.relationship("User", foreign_keys=[professional_id], backref="reviews_received")
+
+    def __repr__(self):
+        return f"<Review {self.id} {self.rating}★ for pro {self.professional_id}>"
+
+
 class Incident(db.Model):
     """An admin-facing report attached to a user and/or a service request —
     e.g. a no-show, a payment dispute, or a complaint. Not raised by

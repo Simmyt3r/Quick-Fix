@@ -13,7 +13,7 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] Cloudinary credentials added to Vercel env vars (`CLOUDINARY_CLOUD_NAME`/`API_KEY`/`API_SECRET`) — wired up in `app/uploads.py`, currently used for profile photos
 
 ## Phase 2 — Data models
-- [x] `users` — id, name, email, password_hash, is_customer, is_professional, role (admin-only flag now — see below), service_category, verified, disabled, created_at, updated_at — **role migrated from a single customer/professional/admin string to two independent booleans, `is_customer` and `is_professional`, so an account can be both at once; `role` is kept solely to flag admins (2026-09-15, migration `b159fdb92b59`)**. `disabled` added 2026-09-17 (migration `c3097a33c5be`) — an admin-managed account-status flag, enforced at login and mid-session (see Phase 6).
+- [x] `users` — id, name, email, password_hash, is_customer, is_professional, role (admin-only flag now — see below), service_category, verified, disabled, reset_token, reset_token_expires, created_at, updated_at — **role migrated from a single customer/professional/admin string to two independent booleans, `is_customer` and `is_professional`, so an account can be both at once; `role` is kept solely to flag admins (2026-09-15, migration `b159fdb92b59`)**. `disabled` added 2026-09-17 (migration `c3097a33c5be`) — an admin-managed account-status flag, enforced at login and mid-session (see Phase 6). `reset_token`/`reset_token_expires` added 2026-09-17 (migration `236021afdff7`) — see Phase 3.
 - [ ] Split professional-only fields (`service_category`, `verified`) into a dedicated `professionals` table with coverage_area, rating, total_jobs, etc., per README's data model
 - [ ] `customers` — id, user_id, phone, location
 - [x] `service_requests` — id, customer_id, professional_id, category, description, location, urgency, status, created_at, updated_at — live, with FK relationships to `users` for both customer and professional
@@ -21,20 +21,21 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 - [x] `users.avatar_url` — Cloudinary-hosted profile photo, nullable (falls back to an initial-letter avatar in the UI)
 - [x] `incidents` — id, reported_by_id, subject_user_id, service_request_id, category, note, status, created_at, resolved_at (2026-09-17, migration `c3097a33c5be`) — see Phase 6
 - [x] `admin_actions` — id, admin_id, action, target_user_id, target_incident_id, detail, created_at (2026-09-17, migration `c3097a33c5be`) — audit trail, see Phase 6
+- [x] `reviews` — id, service_request_id (unique), customer_id, professional_id, rating, comment, created_at (2026-09-18, migration `063cbb7fd9bd`) — see Phase 4
 
 ## Phase 3 — Auth
 - [x] Email/password signup + login with hashed passwords (Werkzeug)
 - [x] Google OAuth flow (Authlib + OIDC) — links to an existing password account by verified email if one matches, otherwise creates a new customer-only account; app runs fine without `GOOGLE_CLIENT_ID`/`SECRET` set, the button just doesn't render. No mid-flow "pick your role" step, so Google sign-ups always land as customer-only — but any account (Google or password) can add the professional role afterwards from Profile Settings, since account type is now two independent flags rather than one fixed role (see Phase 2)
 - [x] Session management (Flask-Login)
 - [x] CSRF protection on every form (Flask-WTF) — `/leads`, `/login`, `/register` all require a valid token; failures flash a friendly message and redirect
-- [ ] Password reset flow
+- [x] Password reset flow — `/forgot-password` and `/reset-password/<token>` via Gmail SMTP (`app/mail.py`). Same-message-either-way to avoid account enumeration; Google-only accounts get an explanatory email instead of a broken link; disabled accounts get nothing. Token is a random string on the user row (not a signed JWT), genuinely single-use, 1-hour expiry. Migration `236021afdff7`. SMTP env vars added to Vercel 2026-09-17 — **not yet confirmed a real email actually arrived; the flow degrades gracefully (logs the link server-side) if they're missing or wrong, so a silent misconfiguration wouldn't show up as an error**
 - [x] Open-redirect protection on the post-login `next` param
 
 ## Phase 4 — Customer experience
 - [x] Dashboard: request form (category, description, location, urgency) posting to `/requests/new`
 - [x] Service-request status tracking — customer sees pending/accepted/completed/cancelled on their dashboard
 - [x] Customer can cancel their own pending request (`/requests/<id>/cancel`) — only while still pending, only their own
-- [ ] Post-job rating & review
+- [x] Post-job rating & review — customer rates a completed job 1–5 stars with an optional comment (`Review` model, migration `063cbb7fd9bd`). One review per service request (enforced with a DB unique constraint on `service_request_id`, and in the route). Customer-to-professional only for now — **assumption, not explicitly confirmed**; a reverse direction later just needs a `direction` column, not a new table. A completed-and-unreviewed job shows a "Rate this job" prompt with a CSS-only star picker on the customer's dashboard; a reviewed job shows the stars given instead. Still open: nowhere for a customer to see a professional's rating *before* choosing them (there's no public professional-listing page for it to appear on yet); no reply-to-review; no flag/report review flow
 
 ## Phase 5 — Professional experience
 - [x] Basic dashboard — profile card (trade + verification badge), open requests in trade, active/completed jobs, and matching leads

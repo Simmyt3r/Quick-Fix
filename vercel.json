@@ -3,22 +3,22 @@
     { "src": "api/index.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/static/(.*)", "dest": "/api/index.py" },
-    { "src": "/(.*)",        "dest": "/api/index.py" }
-  ],
-  "headers": [
     {
-      "source": "/static/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
+      "src": "/static/sw.js",
+      "dest": "/api/index.py",
+      "headers": {
+        "Cache-Control": "no-cache",
+        "Service-Worker-Allowed": "/"
+      }
     },
     {
-      "source": "/static/manifest.webmanifest",
-      "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json" }
-      ]
-    }
+      "src": "/static/manifest.webmanifest",
+      "dest": "/api/index.py",
+      "headers": {
+        "Content-Type": "application/manifest+json"
+      }
+    },
+    { "src": "/static/(.*)", "dest": "/api/index.py" },
+    { "src": "/(.*)",        "dest": "/api/index.py" }
   ]
 }

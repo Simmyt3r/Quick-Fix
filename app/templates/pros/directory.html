@@ -1,0 +1,49 @@
+{% extends "base_app.html" %}
+{% block title %}Find a professional — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="pros-head">
+  <h1>Find a professional</h1>
+  <p class="pros-sub">Verified electricians, plumbers, mechanics, builders and barbers near you.</p>
+</div>
+
+<div class="pros-filter-bar">
+  <a href="{{ url_for('pros.directory') }}" class="btn {% if not category %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+  {% for cat in categories %}
+  <a href="{{ url_for('pros.directory', category=cat) }}" class="btn {% if category == cat %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">{{ cat }}</a>
+  {% endfor %}
+</div>
+
+{% if pros %}
+<div class="pros-grid">
+  {% for pro in pros %}
+  <a href="{{ url_for('pros.profile', pro_id=pro.id) }}" class="pro-card">
+    <div class="pro-card-avatar">
+      {% if pro.avatar_url %}
+        <img src="{{ pro.avatar_url }}" alt="">
+      {% else %}
+        <span>{{ pro.name[0]|upper }}</span>
+      {% endif %}
+    </div>
+    <div class="pro-card-body">
+      <p class="pro-card-name">{{ pro.name }} <span class="pro-card-badge" title="Verified">✅</span></p>
+      <p class="pro-card-trade">{{ pro.service_category }}</p>
+      {% if ratings.get(pro.id) %}
+      <p class="pro-card-rating">★ {{ ratings[pro.id][0] }} <span>({{ ratings[pro.id][1] }})</span></p>
+      {% else %}
+      <p class="pro-card-rating pro-card-rating-empty">No reviews yet</p>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-card">
+  <p class="empty-icon">🔍</p>
+  <p class="empty-title">No verified professionals in this category yet</p>
+  <p class="empty-body">Check back soon, or try a different category.</p>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base_app.html" %}
+{% block title %}{{ pro.name }} — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="pro-profile-head">
+  <div class="pro-profile-avatar">
+    {% if pro.avatar_url %}
+      <img src="{{ pro.avatar_url }}" alt="">
+    {% else %}
+      <span>{{ pro.name[0]|upper }}</span>
+    {% endif %}
+  </div>
+  <div>
+    <h1>{{ pro.name }} <span class="pro-card-badge" title="Verified">✅</span></h1>
+    <p class="pros-sub">{{ pro.service_category }}</p>
+    {% if avg_rating %}
+    <p class="pro-profile-rating">★ {{ avg_rating }} <span>({{ review_count }} review{{ 's' if review_count != 1 }})</span></p>
+    {% else %}
+    <p class="pro-profile-rating pro-card-rating-empty">No reviews yet</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if current_user.is_authenticated and current_user.is_customer %}
+<a href="{{ url_for('requests.new_form', pro_id=pro.id) }}" class="btn btn-primary pro-profile-cta">Request {{ pro.name.split(' ')[0] }}</a>
+{% elif not current_user.is_authenticated %}
+<a href="{{ url_for('auth.login', next=url_for('pros.profile', pro_id=pro.id)) }}" class="btn btn-primary pro-profile-cta">Log in to request {{ pro.name.split(' ')[0] }}</a>
+{% endif %}
+
+<section class="feed-section">
+  <div class="feed-header"><h2 class="section-label">Reviews</h2></div>
+  {% if reviews %}
+    <ul class="feed-list">
+      {% for r in reviews %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap feed-icon-amber">
+          <span>★</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</p>
+          {% if r.comment %}<p class="feed-sub">{{ r.comment }}</p>{% endif %}
+          <p class="feed-sub">{{ r.created_at.strftime('%d %b %Y') }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card"><p class="empty-title">No reviews yet — be the first once your job's done.</p></div>
+  {% endif %}
+</section>
+
+{% endblock %}

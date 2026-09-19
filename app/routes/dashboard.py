@@ -44,8 +44,13 @@ def home():
 
     if current_user.is_professional:
         context["open_requests"] = (
-            ServiceRequest.query.filter_by(
-                status="pending", category=current_user.service_category
+            ServiceRequest.query.filter(
+                ServiceRequest.status == "pending",
+                ServiceRequest.category == current_user.service_category,
+                db.or_(
+                    ServiceRequest.requested_professional_id.is_(None),
+                    ServiceRequest.requested_professional_id == current_user.id,
+                ),
             )
             .order_by(ServiceRequest.created_at.desc())
             .limit(20)

@@ -85,6 +85,10 @@ class ServiceRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     professional_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    # Set when a customer books via a professional's public profile ("Request
+    # this pro") rather than the open category-matching flow. When set, only
+    # this professional can accept the job — see requests.py:accept.
+    requested_professional_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
 
     category = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -97,6 +101,7 @@ class ServiceRequest(db.Model):
 
     customer = db.relationship("User", foreign_keys=[customer_id], backref="requests_made")
     professional = db.relationship("User", foreign_keys=[professional_id], backref="jobs_taken")
+    requested_professional = db.relationship("User", foreign_keys=[requested_professional_id])
 
     def __repr__(self):
         return f"<ServiceRequest {self.id} {self.category} {self.status}>"

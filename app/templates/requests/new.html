@@ -14,16 +14,37 @@
 </div>
 
 <div class="form-page">
+  {% if requested_pro %}
+  <div class="requested-pro-banner">
+    {% if requested_pro.avatar_url %}
+      <img src="{{ requested_pro.avatar_url }}" alt="">
+    {% else %}
+      <span class="requested-pro-initial">{{ requested_pro.name[0]|upper }}</span>
+    {% endif %}
+    <div>
+      <p class="requested-pro-label">Requesting</p>
+      <p class="requested-pro-name">{{ requested_pro.name }} — {{ requested_pro.service_category }}</p>
+    </div>
+  </div>
+  {% endif %}
+
   <form method="POST" action="{{ url_for('requests.new') }}" class="dash-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if requested_pro %}
+    <input type="hidden" name="requested_professional_id" value="{{ requested_pro.id }}">
+    {% endif %}
 
     <label>What do you need?
-      <select name="category" required>
+      <select name="category" required {% if requested_pro %}disabled{% endif %}>
         <option value="">Pick a category</option>
         {% for cat in categories %}
           <option value="{{ cat }}" {% if cat == prefill_category %}selected{% endif %}>{{ cat }}</option>
         {% endfor %}
       </select>
+      {% if requested_pro %}
+      <input type="hidden" name="category" value="{{ prefill_category }}">
+      <span class="field-note">Set to {{ requested_pro.name.split(' ')[0] }}'s trade</span>
+      {% endif %}
     </label>
 
     <label>Describe the job

@@ -1,0 +1,42 @@
+name: Create admin user
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Admin email'
+        required: true
+        type: string
+      password:
+        description: 'Admin password (8+ chars) — note: this will be visible in the workflow run log'
+        required: true
+        type: string
+      name:
+        description: 'Display name'
+        required: false
+        type: string
+        default: 'Admin'
+
+concurrency:
+  group: db-migrations
+  cancel-in-progress: false
+
+jobs:
+  create-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run flask create-admin
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FLASK_APP: run.py
+          SECRET_KEY: unused-for-this-command
+        run: flask create-admin "${{ inputs.email }}" "${{ inputs.password }}" --name "${{ inputs.name }}"

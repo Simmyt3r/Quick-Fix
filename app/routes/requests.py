@@ -2,11 +2,11 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
-from app.models import Review, ServiceRequest, User
+from app.models import VALID_CATEGORIES, Review, ServiceRequest, User
+from app.validation import clean_str, valid_choice, valid_int
 
 requests_bp = Blueprint("requests", __name__, url_prefix="/requests")
 
-VALID_CATEGORIES = {"Electrician", "Plumber", "Mechanic", "Builder", "Barber"}
 VALID_URGENCY = {"today", "this_week", "flexible"}
 
 
@@ -22,7 +22,7 @@ def new_form():
 
     prefill_category = request.args.get("category", "")
     requested_pro = None
-    pro_id = request.args.get("pro_id")
+    pro_id = valid_int(request.args.get("pro_id"), min_value=1)
     if pro_id:
         candidate = User.query.filter_by(id=pro_id, is_professional=True, verified=True, disabled=False).first()
         if candidate is not None:
@@ -47,13 +47,13 @@ def new():
         flash("Only customer accounts can request a service.", "error")
         return redirect(url_for("dashboard.home"))
 
-    category = (request.form.get("category") or "").strip()
-    description = (request.form.get("description") or "").strip()
-    location = (request.form.get("location") or "").strip()
-    urgency = request.form.get("urgency") or "flexible"
+    category = valid_choice(request.form.get("category"), VALID_CATEGORIES)
+    description = clean_str(request.form.get("description"), max_length=2000, required=True)
+    location = clean_str(request.form.get("location"), max_length=255, required=True)
+    urgency = valid_choice(request.form.get("urgency"), VALID_URGENCY, default="flexible")
 
     requested_professional_id = None
-    pro_id = request.form.get("requested_professional_id")
+    pro_id = valid_int(request.form.get("requested_professional_id"), min_value=1)
     if pro_id:
         candidate = User.query.filter_by(id=pro_id, is_professional=True, verified=True, disabled=False).first()
         if candidate is None:
@@ -65,8 +65,6 @@ def new():
     if category not in VALID_CATEGORIES:
         flash("Please choose a valid category.", "error")
         return redirect(url_for("dashboard.home"))
-    if urgency not in VALID_URGENCY:
-        urgency = "flexible"
     if not description or not location:
         flash("Please describe the job and share a location.", "error")
         return redirect(url_for("dashboard.home"))
@@ -172,13 +170,10 @@ def review(request_id):
         flash("You've already reviewed this job.", "error")
         return redirect(url_for("dashboard.home"))
 
-    try:
-        rating = int(request.form.get("rating") or 0)
-    except ValueError:
-        rating = 0
-    comment = (request.form.get("comment") or "").strip() or None
+    rating = valid_int(request.form.get("rating"), min_value=1, max_value=5)
+    comment = clean_str(request.form.get("comment"), max_length=1000) or None
 
-    if rating < 1 or rating > 5:
+    if rating is None:
         flash("Please choose a rating from 1 to 5 stars.", "error")
         return redirect(url_for("dashboard.home"))
 

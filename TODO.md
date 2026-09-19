@@ -93,5 +93,5 @@ Tracking build-out of the marketplace described in `README.md`. Check items off 
 ## Housekeeping
 - [x] `app/static/logo.png` — uploaded and wired into nav, footer, and favicon
 - [ ] Replace placeholder stats and testimonial on the landing page with real numbers before launch
-- [ ] Add `LICENSE` file (README references MIT)
+- [x] Add `LICENSE` file (README references MIT) — added, copyright attributed to Simeon's Laboratories and Co Technologies Ltd (Silabs) as an assumption based on the company being the one building this; flag if that's wrong and it needs a different holder
 - [ ] Rotate any credentials that were ever pasted outside `.env`

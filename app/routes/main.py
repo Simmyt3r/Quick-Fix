@@ -1,7 +1,8 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from app.extensions import db, limiter
-from app.models import ContactSubmission
+from app.models import VALID_CATEGORIES, ContactSubmission
+from app.validation import clean_str, valid_choice
 
 main_bp = Blueprint("main", __name__)
 
@@ -27,13 +28,10 @@ def leads():
     A matching professional will see customer leads under "Leads near
     your trade" on their dashboard.
     """
-    role = request.form.get("role", "customer")
-    if role not in ("customer", "professional"):
-        role = "customer"
-
-    name = (request.form.get("name") or "").strip()
-    phone = (request.form.get("phone") or "").strip()
-    category = (request.form.get("category") or "").strip() or None
+    role = valid_choice(request.form.get("role"), {"customer", "professional"}, default="customer")
+    name = clean_str(request.form.get("name"), max_length=120, required=True)
+    phone = clean_str(request.form.get("phone"), max_length=30, required=True)
+    category = valid_choice(request.form.get("category"), VALID_CATEGORIES)
     anchor = "#pros" if role == "professional" else "#request"
 
     if not name or not phone:

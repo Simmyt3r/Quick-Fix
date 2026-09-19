@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import AdminAction, Incident, ServiceRequest, User
+from app.validation import clean_str, valid_choice, valid_int
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -80,7 +81,7 @@ def reject_professional(user_id):
         flash("That account isn't a professional account.", "error")
         return redirect(url_for("admin.verification_queue"))
 
-    reason = (request.form.get("reason") or "").strip()
+    reason = clean_str(request.form.get("reason"), max_length=255)
     user.verified = False  # explicit — guards against re-approving a previously-verified pro by mistake
     log_action("reject_professional", target_user=user, detail=reason or None)
     db.session.commit()
@@ -94,9 +95,9 @@ def reject_professional(user_id):
 @admin_bp.route("/users")
 @admin_required
 def users():
-    q = (request.args.get("q") or "").strip()
-    role_filter = request.args.get("role") or ""
-    status_filter = request.args.get("status") or ""
+    q = clean_str(request.args.get("q"), max_length=120)
+    role_filter = valid_choice(request.args.get("role"), {"customer", "professional", "admin"}, default="")
+    status_filter = valid_choice(request.args.get("status"), {"disabled", "active", "unverified_pro"}, default="")
 
     query = User.query
     if q:
@@ -136,7 +137,7 @@ def disable_user(user_id):
         flash("Admin accounts can't be disabled from here.", "error")
         return redirect(url_for("admin.users"))
 
-    reason = (request.form.get("reason") or "").strip()
+    reason = clean_str(request.form.get("reason"), max_length=255)
     user.disabled = True
     log_action("disable_user", target_user=user, detail=reason or None)
     db.session.commit()
@@ -163,7 +164,7 @@ def enable_user(user_id):
 @admin_bp.route("/incidents")
 @admin_required
 def incidents():
-    status_filter = request.args.get("status") or "open"
+    status_filter = valid_choice(request.args.get("status"), {"open", "resolved", "all"}, default="open")
     query = Incident.query
     if status_filter in ("open", "resolved"):
         query = query.filter_by(status=status_filter)
@@ -180,19 +181,17 @@ def incidents():
 @admin_required
 def new_incident():
     if request.method == "POST":
-        category = request.form.get("category") or "other"
-        note = (request.form.get("note") or "").strip()
-        subject_user_id = request.form.get("subject_user_id") or None
-        service_request_id = request.form.get("service_request_id") or None
+        category = valid_choice(request.form.get("category"), INCIDENT_CATEGORIES, default="other")
+        note = clean_str(request.form.get("note"), max_length=2000, required=True)
+        subject_user_id = valid_int(request.form.get("subject_user_id"), min_value=1)
+        service_request_id = valid_int(request.form.get("service_request_id"), min_value=1)
 
-        if category not in INCIDENT_CATEGORIES:
-            category = "other"
         if not note:
             flash("Please describe what happened.", "error")
             return redirect(url_for("admin.new_incident"))
 
-        subject_user = User.query.get(int(subject_user_id)) if subject_user_id else None
-        service_request = ServiceRequest.query.get(int(service_request_id)) if service_request_id else None
+        subject_user = User.query.get(subject_user_id) if subject_user_id else None
+        service_request = ServiceRequest.query.get(service_request_id) if service_request_id else None
 
         incident = Incident(
             reported_by_id=current_user.id,

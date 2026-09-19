@@ -1,11 +1,9 @@
 from flask import Blueprint, abort, render_template, request
 
 from app.extensions import db
-from app.models import Review, User
+from app.models import VALID_CATEGORIES, Review, User
 
 pros_bp = Blueprint("pros", __name__, url_prefix="/pros")
-
-VALID_CATEGORIES = {"Electrician", "Plumber", "Mechanic", "Builder", "Barber"}
 
 
 def _rating_map(professional_ids):

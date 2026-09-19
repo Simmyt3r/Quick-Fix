@@ -175,7 +175,7 @@ flask create-admin you@example.com yourpassword
 
 ## License
 
-MIT License — see `LICENSE` file for details. *(Not yet added — see `TODO.md`.)*
+MIT License — see [`LICENSE`](LICENSE) for details.
 
 ---
 

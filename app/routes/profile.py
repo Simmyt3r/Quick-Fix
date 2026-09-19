@@ -2,11 +2,12 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
+from app.models import VALID_CATEGORIES
 from app.uploads import cloudinary_configured, upload_avatar
+from app.validation import clean_str, valid_choice
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
 
-VALID_CATEGORIES = {"Electrician", "Plumber", "Mechanic", "Builder", "Barber"}
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 
@@ -19,7 +20,7 @@ def view():
 @profile_bp.route("/update", methods=["POST"])
 @login_required
 def update():
-    name = (request.form.get("name") or "").strip()
+    name = clean_str(request.form.get("name"), max_length=120, required=True)
     if not name:
         flash("Name can't be empty.", "error")
         return redirect(url_for("profile.view"))
@@ -33,8 +34,8 @@ def update():
         current_user.is_professional = is_professional
 
     if current_user.is_professional:
-        category = (request.form.get("category") or "").strip()
-        if category in VALID_CATEGORIES:
+        category = valid_choice(request.form.get("category"), VALID_CATEGORIES)
+        if category:
             current_user.service_category = category
     else:
         current_user.service_category = None

@@ -9,7 +9,8 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app.extensions import db, limiter, oauth
 from app.mail import send_email
-from app.models import User
+from app.models import VALID_CATEGORIES, User
+from app.validation import clean_str, valid_choice, valid_email
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -32,19 +33,19 @@ def register():
         return redirect(url_for("dashboard.home"))
 
     if request.method == "POST":
-        name = (request.form.get("name") or "").strip()
-        email = (request.form.get("email") or "").strip().lower()
+        name = clean_str(request.form.get("name"), max_length=120, required=True)
+        email = valid_email(request.form.get("email"))
         password = request.form.get("password") or ""
         # Checkboxes: both may be checked, but at least one is required.
         is_customer = request.form.get("is_customer") == "on"
         is_professional = request.form.get("is_professional") == "on"
-        category = (request.form.get("category") or "").strip() or None
+        category = valid_choice(request.form.get("category"), VALID_CATEGORIES)
 
         if not is_customer and not is_professional:
             is_customer = True  # sensible default rather than an accountless user
 
         if not name or not email or len(password) < 8:
-            flash("Please fill in your name, email, and an 8+ character password.", "error")
+            flash("Please fill in your name, a valid email, and an 8+ character password.", "error")
             return render_template("auth/register.html"), 400
 
         if User.query.filter_by(email=email).first():

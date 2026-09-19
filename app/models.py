@@ -5,6 +5,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db, login_manager
 
+# Single source of truth for service categories — several routes and
+# templates need this set (registration, the request form, the public
+# directory, profile settings), and it used to be copy-pasted in three
+# different files with no guarantee they'd stay in sync.
+VALID_CATEGORIES = {"Electrician", "Plumber", "Mechanic", "Builder", "Barber"}
+
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"

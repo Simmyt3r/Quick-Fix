@@ -99,7 +99,15 @@ body::before{
   color:var(--ink);
 }
 .splash-logo{ width:28px;height:28px;object-fit:contain; }
-.splash-nav-actions{ display:flex; gap:10px; }
+.splash-nav-actions{ display:flex; align-items:center; gap:10px; }
+.splash-nav-link{
+  color:var(--ink);
+  font-weight:600;
+  font-size:14.5px;
+  text-decoration:none;
+  padding:8px 4px;
+}
+.splash-nav-link:hover{ text-decoration:underline; }
 
 .splash-main{
   flex:1;

@@ -30,6 +30,7 @@
       QuickFix Nearby
     </a>
     <div class="splash-nav-actions">
+      <a href="{{ url_for('pros.directory') }}" class="splash-nav-link">Find a pro</a>
       {% if current_user.is_authenticated %}
         <a href="{{ url_for('dashboard.home') }}" class="btn btn-primary btn-sm">Dashboard</a>
       {% else %}

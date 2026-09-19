@@ -10,7 +10,8 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 - **24/7 service booking** — customers request services anytime, specifying category, description, location, and urgency; matching professionals accept and complete the job — live
 - **Verified professionals** — providers get a verification badge, reviewed and approved by an admin through a dedicated queue (`/admin/verification`); unverified professionals are blocked from accepting jobs
-- **Ratings & reviews** — once a job is marked complete, the customer can rate it 1–5 stars with an optional comment; the professional's average rating shows on their own dashboard. One review per job. There's no public professional-listing page yet for a rating to be seen *before* a customer books, though — that's still planned.
+- **Ratings & reviews** — once a job is marked complete, the customer can rate it 1–5 stars with an optional comment; the professional's average rating shows on their own dashboard, and publicly on the professional directory and their profile page. One review per job.
+- **Public professional directory** — `/pros/` (browsable, filterable by category) and `/pros/<id>` (profile with average rating and recent reviews), unauthenticated. A customer can request a specific professional directly from their profile ("Request this pro"), which locks the booking to that pro's trade and only they can accept it.
 - **Live dashboard** — full request lifecycle (pending → accepted → completed/cancelled) tracked for customers, professionals, and admins
 - **Account recovery** — self-service password reset via a time-limited emailed link (Gmail SMTP); Google-only accounts get a clear "sign in with Google instead" email rather than a broken reset link
 - **Secure by default** — hashed credentials, CSRF-protected forms, rate-limited auth/lead endpoints, and a strict CSP
@@ -30,7 +31,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 ## Core features
 
 1. **Customer booking** *(live)* — category selection, description, location, urgency; status tracking, self-service cancellation, and a 1–5 star rating with optional comment once a job is complete. Scheduling (a specific date/time, vs. just urgency) is still planned.
-2. **Professional management** *(partial)* — accept/complete jobs in your own trade, verification badge display, average rating shown on your own dashboard. Availability toggle, coverage area, and earnings are still planned; so is a public listing/profile page where a customer could see that rating before booking.
+2. **Professional management** *(partial)* — accept/complete jobs in your own trade, verification badge display, average rating shown on your own dashboard and on your public profile. A customer can book you directly from that profile. Availability toggle, coverage area, and earnings are still planned.
 3. **Admin controls** *(live)* — dashboard with user/request/lead stats and recent activity tables; a verification queue to approve/reject professionals; user management with search, filtering, and account disable/enable; incident logging (no-shows, disputes, complaints) tied to a user and/or service request; and a full audit log of every admin action. Deeper reporting (trends, exports) beyond the current counts/tables is still planned.
 
 ### Service categories
@@ -57,7 +58,7 @@ A marketplace platform connecting customers with verified, on-demand service pro
 
 ✅ **Applied.** `app/static/css/style.css` uses this palette (`--blue`, `--green`, `--gold`, etc.) — screenshot-tested at desktop and mobile widths.
 
-**UX direction:** mobile-first, rounded cards, soft shadows, large touch targets, map-centric discovery ("Find & Fix It Fast"), verification badges, real professional photography. Primary flow: **Search → Find nearby pro → View profile → Book → Pay → Track → Rate.** Book, Track, and Rate are live; Search/Find/View-profile (a public professional directory) and Pay (in-app payment) are still planned — today, booking goes straight from category selection to matching, and the "Rate" step happens on the customer's own dashboard rather than a public profile page.
+**UX direction:** mobile-first, rounded cards, soft shadows, large touch targets, map-centric discovery ("Find & Fix It Fast"), verification badges, real professional photography. Primary flow: **Search → Find nearby pro → View profile → Book → Pay → Track → Rate.** Find, View profile, Book, Track, and Rate are all live via the public directory (`/pros/`) and "Request this pro." Search (free-text, vs. just a category filter) and Pay (in-app payment) are still planned.
 
 ## Data model
 
@@ -65,7 +66,7 @@ Implemented so far (Phase 2 in progress) — a unified `users` table plus separa
 
 - **users** *(live)* — id, name, email, password_hash (nullable for Google-only accounts), google_id, is_customer, is_professional (independent flags — an account can be either or both), role (admin-only flag; not used for customer/professional anymore), service_category, verified, disabled, reset_token, reset_token_expires, avatar_url, created_at, updated_at. `service_category`/`verified` are professional-only fields kept on this table for now rather than a separate `professionals` table. `disabled` is admin-managed account status — a disabled user is blocked at login and any active session is killed on their next request. `reset_token`/`reset_token_expires` back the password-reset flow — a random single-use string, not a signed token, cleared the moment it's redeemed.
 - **contact_submissions** *(live)* — landing-page leads from `/leads`, shown on professional dashboards (filtered by category) and the admin dashboard (all leads)
-- **service_requests** *(live)* — id, customer_id, professional_id (nullable until accepted), category, description, location, urgency, status (pending / accepted / completed / cancelled), created_at, updated_at. Both `customer_id` and `professional_id` are foreign keys to `users.id`.
+- **service_requests** *(live)* — id, customer_id, professional_id (nullable until accepted), requested_professional_id (nullable — set when booked via "Request this pro"; if set, only that professional can accept), category, description, location, urgency, status (pending / accepted / completed / cancelled), created_at, updated_at. `customer_id`, `professional_id`, and `requested_professional_id` are all foreign keys to `users.id`.
 - **reviews** *(live)* — id, service_request_id (unique — one review per job), customer_id, professional_id, rating (1–5), comment (optional), created_at. Customer-to-professional only for now; a reverse direction would need a `direction` column rather than a new table.
 - **incidents** *(live)* — id, reported_by_id, subject_user_id, service_request_id, category (no_show / dispute / complaint / other), note, status (open / resolved), created_at, resolved_at. An admin-logged report attachable to a user and/or a service request.
 - **admin_actions** *(live)* — id, admin_id, action, target_user_id, target_incident_id, detail, created_at. Audit trail — every admin action (verify, reject, disable, enable, log incident, resolve incident) is recorded automatically.
@@ -95,9 +96,11 @@ Quick-Fix/
 │   │   ├── dashboard.py      # "/dashboard" (role-aware)
 │   │   ├── requests.py       # "/requests/new", "/accept", "/complete", "/cancel", "/review"
 │   │   ├── profile.py        # "/profile", "/profile/update", "/profile/avatar", "/profile/settings"
-│   │   └── admin.py          # "/admin/verification", "/admin/users", "/admin/incidents", "/admin/activity"
+│   │   ├── admin.py          # "/admin/verification", "/admin/users", "/admin/incidents", "/admin/activity"
+│   │   └── pros.py           # "/pros/" (public directory), "/pros/<id>" (public profile)
 │   ├── static/
 │   │   ├── css/style.css
+│   │   ├── css/splash.css     # standalone landing-page styles (index.html doesn't use style.css)
 │   │   ├── js/                # sidebar.js, avatar-upload.js, register.js, profile-role.js, service-worker-register.js, admin-reject-toggle.js, admin-disable-toggle.js, review-toggle.js
 │   │   ├── manifest.webmanifest, sw.js  # PWA
 │   │   └── logo.png
@@ -105,10 +108,12 @@ Quick-Fix/
 │       ├── index.html        # Marketing landing page
 │       ├── base_app.html     # Shared shell — sidebar, bottom nav, flash messages
 │       ├── _sidebar.html     # Slide-out drawer (mobile) / persistent rail (desktop) — Admin section visible only to admins
+│       ├── pros/              # directory.html, profile.html — public, no login required
 │       ├── auth/              # login, register, forgot_password, reset_password
 │       ├── dashboard/, requests/, profile/, admin/
 ├── migrations/                # Flask-Migrate/Alembic — `flask db upgrade`
-├── .github/workflows/migrate.yml  # Manually-triggered `flask db upgrade` against production
+├── .github/workflows/migrate.yml       # Manually-triggered `flask db upgrade` against production
+├── .github/workflows/create-admin.yml  # Manually-triggered `flask create-admin` (creates or promotes) against production
 ├── requirements.txt
 ├── vercel.json
 ├── .env.example

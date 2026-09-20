@@ -1,13 +1,18 @@
 (function () {
   var customerBox = document.getElementById("profile-is-customer");
   var professionalBox = document.getElementById("profile-is-professional");
-  var categoryField = document.getElementById("profile-category-field");
+  var toggledFields = [
+    document.getElementById("profile-category-field"),
+    document.getElementById("profile-coverage-field"),
+    document.getElementById("profile-available-field"),
+  ];
   if (!customerBox || !professionalBox) return;
 
   function sync() {
-    if (categoryField) {
-      categoryField.style.display = professionalBox.checked ? "flex" : "none";
-    }
+    toggledFields.forEach(function (field) {
+      if (!field) return;
+      field.style.display = professionalBox.checked ? "" : "none";
+    });
   }
 
   function guardAtLeastOne(justChanged) {

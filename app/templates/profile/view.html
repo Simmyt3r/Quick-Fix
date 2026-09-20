@@ -74,18 +74,32 @@
     {% if current_user.is_professional %}
     <label id="profile-category-field" class="category-field">Your trade
       <select name="category">
-        {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
+        {% for cat in categories %}
           <option value="{{ cat }}" {% if cat == current_user.service_category %}selected{% endif %}>{{ cat }}</option>
         {% endfor %}
       </select>
     </label>
+    <label id="profile-coverage-field" class="category-field">Areas you cover
+      <input type="text" name="coverage_area" placeholder="e.g. Wuse, Garki, Asokoro" value="{{ current_user.professional_profile.coverage_area if current_user.professional_profile else '' }}" maxlength="255">
+    </label>
+    <label id="profile-available-field" class="role-option">
+      <input type="checkbox" name="available" {% if not current_user.professional_profile or current_user.professional_profile.available %}checked{% endif %}>
+      Available for new jobs right now
+    </label>
     {% else %}
     <label id="profile-category-field" class="category-field is-hidden">Your trade
       <select name="category">
-        {% for cat in ['Electrician', 'Plumber', 'Mechanic', 'Builder', 'Barber'] %}
+        {% for cat in categories %}
           <option value="{{ cat }}">{{ cat }}</option>
         {% endfor %}
       </select>
+    </label>
+    <label id="profile-coverage-field" class="category-field is-hidden">Areas you cover
+      <input type="text" name="coverage_area" maxlength="255">
+    </label>
+    <label id="profile-available-field" class="role-option is-hidden">
+      <input type="checkbox" name="available">
+      Available for new jobs right now
     </label>
     {% endif %}
 

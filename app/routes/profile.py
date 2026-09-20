@@ -14,7 +14,11 @@ ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 @profile_bp.route("/", methods=["GET"])
 @login_required
 def view():
-    return render_template("profile/view.html", cloudinary_ready=cloudinary_configured())
+    return render_template(
+        "profile/view.html",
+        cloudinary_ready=cloudinary_configured(),
+        categories=sorted(VALID_CATEGORIES),
+    )
 
 
 @profile_bp.route("/update", methods=["POST"])
@@ -37,6 +41,10 @@ def update():
         category = valid_choice(request.form.get("category"), VALID_CATEGORIES)
         if category:
             current_user.service_category = category
+
+        profile = current_user.ensure_professional_profile()
+        profile.coverage_area = clean_str(request.form.get("coverage_area"), max_length=255) or None
+        profile.available = request.form.get("available") == "on"
     else:
         current_user.service_category = None
 

@@ -232,6 +232,19 @@
     </div>
   </div>
 
+  <form method="POST" action="{{ url_for('profile.update') }}" class="availability-quick-toggle">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="name" value="{{ current_user.name }}">
+    <input type="hidden" name="is_customer" value="{{ 'on' if current_user.is_customer else '' }}">
+    <input type="hidden" name="is_professional" value="on">
+    <input type="hidden" name="category" value="{{ current_user.service_category }}">
+    <input type="hidden" name="coverage_area" value="{{ current_user.professional_profile.coverage_area if current_user.professional_profile else '' }}">
+    <label class="availability-toggle-label">
+      <input type="checkbox" name="available" id="availability-quick-checkbox" {% if not current_user.professional_profile or current_user.professional_profile.available %}checked{% endif %}>
+      Available for new jobs
+    </label>
+  </form>
+
   {# Open leads / requests in trade #}
   <section class="feed-section">
     <div class="feed-header">
@@ -309,5 +322,6 @@
 {% endif %}
 
 <script src="{{ url_for('static', filename='js/review-toggle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/availability-toggle.js') }}"></script>
 {% endblock %}
 

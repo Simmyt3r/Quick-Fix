@@ -14,10 +14,16 @@
   <div>
     <h1>{{ pro.name }} <span class="pro-card-badge" title="Verified">✅</span></h1>
     <p class="pros-sub">{{ pro.service_category }}</p>
+    {% if pro.professional_profile and pro.professional_profile.coverage_area %}
+    <p class="pros-sub">Covers: {{ pro.professional_profile.coverage_area }}</p>
+    {% endif %}
     {% if avg_rating %}
     <p class="pro-profile-rating">★ {{ avg_rating }} <span>({{ review_count }} review{{ 's' if review_count != 1 }})</span></p>
     {% else %}
     <p class="pro-profile-rating pro-card-rating-empty">No reviews yet</p>
+    {% endif %}
+    {% if pro.professional_profile and not pro.professional_profile.available %}
+    <p class="badge badge-muted pro-unavailable-badge">Not taking new jobs right now</p>
     {% endif %}
   </div>
 </div>

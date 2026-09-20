@@ -28,7 +28,7 @@
     </div>
     <div class="pro-card-body">
       <p class="pro-card-name">{{ pro.name }} <span class="pro-card-badge" title="Verified">✅</span></p>
-      <p class="pro-card-trade">{{ pro.service_category }}</p>
+      <p class="pro-card-trade">{{ pro.service_category }}{% if pro.professional_profile and not pro.professional_profile.available %} · <span class="pro-card-unavailable">Not available</span>{% endif %}</p>
       {% if ratings.get(pro.id) %}
       <p class="pro-card-rating">★ {{ ratings[pro.id][0] }} <span>({{ ratings[pro.id][1] }})</span></p>
       {% else %}

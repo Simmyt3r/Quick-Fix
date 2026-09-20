@@ -69,6 +69,42 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         return self.role == "admin"
 
+    def ensure_professional_profile(self):
+        """Get this user's Professional row, creating one with defaults if
+        it doesn't exist yet — covers accounts that became professional
+        after the professionals table was added (existing rows were
+        backfilled in migration 74671caae830, but a customer who later
+        checks "professional" in Settings won't have one until now)."""
+        if self.professional_profile is None:
+            self.professional_profile = Professional(user_id=self.id)
+            db.session.add(self.professional_profile)
+        return self.professional_profile
+
+
+class Professional(db.Model):
+    """Extra profile fields for a professional account, one-to-one with
+    User. service_category and verified stay on User itself — they're
+    load-bearing in enough places (login-time checks, the accept-job
+    guard, the admin verification queue) that moving them isn't worth
+    the risk right now. This table is for genuinely new fields that
+    don't exist anywhere yet."""
+
+    __tablename__ = "professionals"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+
+    coverage_area = db.Column(db.String(255), nullable=True)  # free-text for now, e.g. "Wuse, Garki, Asokoro"
+    available = db.Column(db.Boolean, nullable=False, default=True)  # toggled by the pro; False = "not taking jobs right now"
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("professional_profile", uselist=False))
+
+    def __repr__(self):
+        return f"<Professional user_id={self.user_id} available={self.available}>"
+
 
 class ContactSubmission(db.Model):
     """Leads captured from the landing page's two call-to-action forms."""

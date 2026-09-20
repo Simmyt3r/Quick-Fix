@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import AdminAction, Incident, ServiceRequest, User
+from app.uploads import verification_doc_url
 from app.validation import clean_str, valid_choice, valid_int
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -54,7 +55,22 @@ def verification_queue():
         .order_by(User.created_at.asc())
         .all()
     )
-    return render_template("admin/verification.html", pending=pending)
+
+    doc_urls = {}
+    for u in pending:
+        profile = u.professional_profile
+        if profile and profile.verification_doc_public_id:
+            try:
+                doc_urls[u.id] = verification_doc_url(
+                    profile.verification_doc_public_id, profile.verification_doc_format
+                )
+            except Exception:
+                # Cloudinary not configured, or a transient API error — the
+                # queue should still render without a working link rather
+                # than 500 the whole page over one bad document.
+                pass
+
+    return render_template("admin/verification.html", pending=pending, doc_urls=doc_urls)
 
 
 @admin_bp.route("/verification/<int:user_id>/approve", methods=["POST"])

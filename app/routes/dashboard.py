@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -88,3 +88,24 @@ def home():
         context["review_count"] = rating_agg[1]
 
     return render_template("dashboard/dashboard.html", **context)
+
+
+@dashboard_bp.route("/jobs")
+@login_required
+def job_history():
+    """Full, unbounded job history for a professional — the dashboard's
+    "Your jobs" list is capped to the 20 most recent for a quick glance;
+    this is the complete record, filterable by status."""
+    if not current_user.is_professional:
+        return render_template("dashboard/job_history.html", jobs=[], status_filter="all")
+
+    status_filter = request.args.get("status") or "all"
+    query = ServiceRequest.query.filter(
+        ServiceRequest.professional_id == current_user.id,
+        ServiceRequest.status.in_(["accepted", "completed", "cancelled"]),
+    )
+    if status_filter in ("accepted", "completed", "cancelled"):
+        query = query.filter(ServiceRequest.status == status_filter)
+
+    jobs = query.order_by(ServiceRequest.created_at.desc()).all()
+    return render_template("dashboard/job_history.html", jobs=jobs, status_filter=status_filter)

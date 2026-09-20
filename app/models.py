@@ -97,6 +97,13 @@ class Professional(db.Model):
     coverage_area = db.Column(db.String(255), nullable=True)  # free-text for now, e.g. "Wuse, Garki, Asokoro"
     available = db.Column(db.Boolean, nullable=False, default=True)  # toggled by the pro; False = "not taking jobs right now"
 
+    # Verification document — a photo of an ID/certificate, uploaded to
+    # Cloudinary as a private asset (never a public URL, unlike avatars).
+    # doc_format is needed alongside the public_id to build a signed URL
+    # later (see uploads.verification_doc_url).
+    verification_doc_public_id = db.Column(db.String(255), nullable=True)
+    verification_doc_format = db.Column(db.String(10), nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

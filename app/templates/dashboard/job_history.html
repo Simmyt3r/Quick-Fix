@@ -1,0 +1,70 @@
+{% extends "base_app.html" %}
+{% block title %}Job history — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+{% set status_badge = {'accepted': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
+{% set status_label = {'accepted': 'In progress', 'completed': 'Completed', 'cancelled': 'Cancelled'} %}
+{% set category_icon = {
+  'Electrician': '⚡', 'Plumber': '🚰', 'Mechanic': '🚗',
+  'Builder': '🧱', 'Barber': '✂️'
+} %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Your record</p>
+      <h1 class="app-greeting-name">Job history</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="admin-filter-bar">
+  <a href="{{ url_for('dashboard.job_history', status='all') }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+  <a href="{{ url_for('dashboard.job_history', status='accepted') }}" class="btn {% if status_filter == 'accepted' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">In progress</a>
+  <a href="{{ url_for('dashboard.job_history', status='completed') }}" class="btn {% if status_filter == 'completed' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Completed</a>
+  <a href="{{ url_for('dashboard.job_history', status='cancelled') }}" class="btn {% if status_filter == 'cancelled' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Cancelled</a>
+</div>
+
+<section class="feed-section">
+  <div class="feed-header">
+    <h2 class="section-label">{{ jobs | length }} job{{ 's' if jobs | length != 1 }}</h2>
+  </div>
+  {% if jobs %}
+    <ul class="feed-list">
+      {% for r in jobs %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap feed-icon-{{ status_badge[r.status] }}">
+          <span>{{ category_icon.get(r.category, '🔧') }}</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</p>
+          <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b %Y') }}</p>
+          {% if r.review %}
+          <p class="feed-sub">{{ '★' * r.review.rating }}{{ '☆' * (5 - r.review.rating) }}{% if r.review.comment %} — {{ r.review.comment[:60] }}{% endif %}</p>
+          {% endif %}
+        </div>
+        <div class="feed-right">
+          <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card">
+      <p class="empty-icon">📋</p>
+      <p class="empty-title">No jobs here yet</p>
+      <p class="empty-body">Jobs you accept will show up in your history once they're underway.</p>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}

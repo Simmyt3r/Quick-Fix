@@ -36,6 +36,13 @@
         <div class="feed-body">
           <p class="feed-title">{{ u.name }}</p>
           <p class="feed-sub">{{ u.email }} · {{ u.service_category or 'No trade set' }} · joined {{ u.created_at.strftime('%d %b %Y') }}</p>
+          {% if doc_urls.get(u.id) %}
+          <p class="feed-sub"><a href="{{ doc_urls[u.id] }}" target="_blank" rel="noopener">View verification document</a> <span class="field-note">(link expires in 10 min)</span></p>
+          {% elif u.professional_profile and u.professional_profile.verification_doc_public_id %}
+          <p class="feed-sub field-note">Document on file, but the link couldn't be generated right now.</p>
+          {% else %}
+          <p class="feed-sub field-note">No document uploaded yet.</p>
+          {% endif %}
         </div>
         <div class="feed-right admin-row-actions">
           <form method="POST" action="{{ url_for('admin.approve_professional', user_id=u.id) }}">

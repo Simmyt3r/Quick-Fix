@@ -38,6 +38,12 @@
       Find a pro
     </a>
     {% endif %}
+    {% if current_user.is_professional %}
+    <a href="{{ url_for('dashboard.job_history') }}" class="sidebar-link {% if request.endpoint == 'dashboard.job_history' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H1l3-3m0 6l-3-3"/><path d="M22 12A10 10 0 1 1 12 2"/><path d="M12 6v6l4 2"/></svg>
+      Job history
+    </a>
+    {% endif %}
     <a href="{{ url_for('profile.view') }}" class="sidebar-link {% if request.endpoint == 'profile.view' %}active{% endif %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
       Profile

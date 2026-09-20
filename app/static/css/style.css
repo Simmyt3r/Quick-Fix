@@ -1095,6 +1095,13 @@ footer{
   min-width:22px;
   text-align:center;
 }
+.feed-count-link{
+  font-size:13px;
+  font-weight:600;
+  color:var(--blue);
+  text-decoration:none;
+}
+.feed-count-link:hover{ text-decoration:underline; }
 .feed-list{
   list-style:none;
   margin:0;
@@ -1146,6 +1153,8 @@ footer{
   color:var(--muted);
   margin:0;
 }
+.feed-sub a{ color:var(--blue); font-weight:600; text-decoration:none; }
+.feed-sub a:hover{ text-decoration:underline; }
 .feed-right{
   display:flex;
   flex-direction:column;
@@ -1502,6 +1511,12 @@ footer{
 }
 
 .dash-form input:disabled{ background:var(--paper-alt); color:var(--muted); }
+.verification-doc-form{
+  margin-bottom:14px;
+}
+.verification-doc-form .avatar-hint{
+  margin-top:6px;
+}
 
 .settings-heading{ margin-bottom:14px; display:block; }
 

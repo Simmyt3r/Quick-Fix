@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 
 from app.extensions import db, limiter
 from app.models import VALID_CATEGORIES, ContactSubmission
@@ -15,8 +15,19 @@ def index():
 
 @main_bp.route("/healthz")
 def healthz():
-    """Basic uptime check for the hosting platform."""
-    return {"status": "ok"}, 200
+    """
+    Uptime/health check for the hosting platform. Actually touches the
+    database rather than returning a static 200 — a health check that
+    can't detect the DB being unreachable isn't telling you anything
+    useful, and that's exactly the failure mode this project already
+    hit once (migrations silently not applied in production).
+    """
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        return {"status": "ok"}, 200
+    except Exception as exc:
+        current_app.logger.error("Health check DB failure: %s", exc)
+        return {"status": "error", "detail": "database unreachable"}, 503
 
 
 @main_bp.route("/leads", methods=["POST"])

@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
 from app.models import VALID_CATEGORIES
-from app.uploads import cloudinary_configured, upload_avatar
+from app.uploads import cloudinary_configured, upload_avatar, upload_verification_doc
 from app.validation import clean_str, valid_choice
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
@@ -80,6 +80,46 @@ def avatar():
     current_user.avatar_url = url
     db.session.commit()
     flash("Profile photo updated.", "success")
+    return redirect(url_for("profile.view"))
+
+
+@profile_bp.route("/verification-doc", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour", methods=["POST"])
+def verification_doc():
+    if not current_user.is_professional:
+        flash("Only professional accounts can upload a verification document.", "error")
+        return redirect(url_for("profile.view"))
+    if not cloudinary_configured():
+        flash("Document uploads aren't configured yet.", "error")
+        return redirect(url_for("profile.view"))
+
+    file = request.files.get("doc")
+    if not file or file.filename == "":
+        flash("Choose a file first.", "error")
+        return redirect(url_for("profile.view"))
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        flash("Please upload a PNG, JPG, or WEBP image of your ID or certificate.", "error")
+        return redirect(url_for("profile.view"))
+
+    try:
+        public_id, doc_format = upload_verification_doc(file, current_user.id)
+    except Exception:
+        flash("Upload failed — please try a different image.", "error")
+        return redirect(url_for("profile.view"))
+
+    profile = current_user.ensure_professional_profile()
+    profile.verification_doc_public_id = public_id
+    profile.verification_doc_format = doc_format
+    # A new document means whatever verification status existed before is
+    # stale — an admin should look at the new upload, not carry over an
+    # approval based on a since-replaced document.
+    current_user.verified = False
+    db.session.commit()
+
+    flash("Document uploaded — an admin will review it shortly.", "success")
     return redirect(url_for("profile.view"))
 
 

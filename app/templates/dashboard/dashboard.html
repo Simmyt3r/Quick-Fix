@@ -284,6 +284,7 @@
   <section class="feed-section">
     <div class="feed-header">
       <h2 class="section-label">Your jobs</h2>
+      <a href="{{ url_for('dashboard.job_history') }}" class="feed-count-link">See all</a>
     </div>
     {% if my_jobs %}
       <ul class="feed-list">

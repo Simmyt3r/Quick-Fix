@@ -46,6 +46,25 @@
       <span class="badge badge-amber">Pending review</span>
     {% endif %}
   </div>
+
+  {% if cloudinary_ready %}
+  <form method="POST" action="{{ url_for('profile.verification_doc') }}" enctype="multipart/form-data" class="verification-doc-form" id="verification-doc-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="avatar-upload-btn">
+      {% if current_user.professional_profile and current_user.professional_profile.verification_doc_public_id %}
+        Replace verification document
+      {% else %}
+        Upload a verification document (ID or certificate)
+      {% endif %}
+      <input type="file" name="doc" accept="image/png,image/jpeg,image/webp" id="verification-doc-input">
+    </label>
+    {% if current_user.professional_profile and current_user.professional_profile.verification_doc_public_id %}
+      <p class="avatar-hint">A document is on file — uploading a new one resets your status to pending review.</p>
+    {% endif %}
+  </form>
+  {% else %}
+    <p class="avatar-hint">Document uploads aren't configured yet.</p>
+  {% endif %}
   {% endif %}
 
   <form method="POST" action="{{ url_for('profile.update') }}" class="dash-form">
@@ -108,5 +127,6 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/avatar-upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/verification-doc-upload.js') }}"></script>
 <script src="{{ url_for('static', filename='js/profile-role.js') }}"></script>
 {% endblock %}

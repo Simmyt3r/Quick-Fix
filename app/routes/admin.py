@@ -3,7 +3,7 @@ from functools import wraps
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import AdminAction, Incident, PlatformSetting, Payout, ServiceRequest, User
 from app.uploads import verification_doc_url
 from app.validation import clean_str, valid_choice, valid_int
@@ -172,6 +172,43 @@ def enable_user(user_id):
     db.session.commit()
 
     flash(f"{user.name}'s account is re-enabled.", "success")
+    return redirect(url_for("admin.users"))
+
+
+@admin_bp.route("/users/<int:user_id>/promote", methods=["POST"])
+@admin_required
+@limiter.limit("10 per hour", methods=["POST"])
+def promote_to_admin(user_id):
+    """Grant admin. Deliberately one-way from here — demoting an admin
+    still requires the CLI/workflow, same as before this feature existed.
+    Requires the ACTING admin's own password as a step-up confirmation,
+    since this is the single most consequential action available in the
+    whole admin area: it's how every other admin power gets handed out."""
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You're already an admin.", "error")
+        return redirect(url_for("admin.users"))
+    if user.is_admin:
+        flash(f"{user.name} is already an admin.", "error")
+        return redirect(url_for("admin.users"))
+    if user.disabled:
+        flash("A disabled account can't be promoted — enable it first.", "error")
+        return redirect(url_for("admin.users"))
+
+    confirm_password = request.form.get("confirm_password") or ""
+    if current_user.password_hash is None:
+        flash("Your account signs in with Google and has no password to confirm with — set a password via Forgot password first.", "error")
+        return redirect(url_for("admin.users"))
+    if not current_user.check_password(confirm_password):
+        flash("Incorrect password — admin status was NOT granted.", "error")
+        return redirect(url_for("admin.users"))
+
+    user.role = "admin"
+    log_action("promote_to_admin", target_user=user)
+    db.session.commit()
+
+    flash(f"{user.name} is now an admin.", "success")
     return redirect(url_for("admin.users"))
 
 

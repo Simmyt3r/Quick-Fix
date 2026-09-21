@@ -69,6 +69,7 @@
             </form>
             {% else %}
             <button type="button" class="btn btn-ghost btn-sm" data-disable-toggle="{{ u.id }}">Disable</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-promote-toggle="{{ u.id }}">Make admin</button>
             {% endif %}
           {% endif %}
           <a href="{{ url_for('admin.new_incident', user_id=u.id) }}" class="btn btn-ghost btn-sm">Log incident</a>
@@ -82,6 +83,14 @@
           <button type="submit" class="btn btn-ghost btn-sm">Confirm disable</button>
         </form>
       </li>
+      <li class="admin-reject-row" id="promote-row-{{ u.id }}" hidden>
+        <form method="POST" action="{{ url_for('admin.promote_to_admin', user_id=u.id) }}" class="admin-reject-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <p class="field-note promote-warning">Grants full admin access to {{ u.name }}. Enter your own password to confirm.</p>
+          <input type="password" name="confirm_password" placeholder="Your password" required autocomplete="current-password">
+          <button type="submit" class="btn btn-primary btn-sm">Confirm — make admin</button>
+        </form>
+      </li>
       {% endif %}
       {% endfor %}
     </ul>
@@ -91,4 +100,5 @@
 </section>
 
 <script src="{{ url_for('static', filename='js/admin-disable-toggle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-promote-toggle.js') }}"></script>
 {% endblock %}

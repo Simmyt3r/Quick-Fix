@@ -1576,13 +1576,19 @@ footer{
   gap:8px;
   flex-wrap:wrap;
 }
-.admin-reject-form input[type="text"]{
+.admin-reject-form input[type="text"],
+.admin-reject-form input[type="password"]{
   flex:1 1 220px;
   padding:9px 12px;
   border-radius:8px;
   border:1px solid var(--line);
   font-family:'Barlow', sans-serif;
   font-size:14px;
+}
+.promote-warning{
+  flex-basis:100%;
+  color:var(--urgent, #C43F1F);
+  font-weight:600;
 }
 
 @media (max-width:600px){

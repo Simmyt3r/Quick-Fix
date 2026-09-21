@@ -1,0 +1,70 @@
+{% extends "base_app.html" %}
+{% block title %}Payouts — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="app-topbar">
+  <div class="app-topbar-inner">
+    <div class="app-greeting">
+      <p class="app-greeting-label">Admin</p>
+      <h1 class="app-greeting-name">Payouts</h1>
+    </div>
+    <div class="app-topbar-actions">
+      <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <a href="{{ url_for('main.index') }}" class="app-logo-link" aria-label="QuickFix Nearby home">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="app-logo-mark">
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if status_filter == 'owed' %}
+<div class="home-banner home-banner-admin">
+  <div class="home-banner-inner">
+    <p class="home-banner-label">Total owed</p>
+    <p class="home-banner-val">₦{{ '{:,}'.format(total_owed // 100) }}</p>
+  </div>
+</div>
+{% endif %}
+
+<div class="admin-filter-bar">
+  <a href="{{ url_for('admin.payouts', status='owed') }}" class="btn {% if status_filter == 'owed' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Owed</a>
+  <a href="{{ url_for('admin.payouts', status='paid') }}" class="btn {% if status_filter == 'paid' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Paid</a>
+  <a href="{{ url_for('admin.payouts', status='all') }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+</div>
+
+<section class="feed-section">
+  {% if entries %}
+    <ul class="feed-list">
+      {% for p in entries %}
+      <li class="feed-item">
+        <div class="feed-icon-wrap {% if p.status == 'owed' %}feed-icon-amber{% else %}feed-icon-green{% endif %}">
+          <span>₦</span>
+        </div>
+        <div class="feed-body">
+          <p class="feed-title">{{ p.professional.name }} — ₦{{ '{:,}'.format(p.amount // 100) }}</p>
+          <p class="feed-sub">Job #{{ p.service_request_id }} · {{ p.created_at.strftime('%d %b %Y') }}{% if p.paid_at %} · paid {{ p.paid_at.strftime('%d %b %Y') }} by {{ p.paid_by.name if p.paid_by else '—' }}{% endif %}</p>
+        </div>
+        <div class="feed-right">
+          <span class="badge badge-{{ 'amber' if p.status == 'owed' else 'green' }}">{{ p.status | capitalize }}</span>
+          {% if p.status == 'owed' %}
+          <form method="POST" action="{{ url_for('admin.mark_payout_paid', payout_id=p.id) }}" class="feed-inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-sm">Mark paid</button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-card">
+      <p class="empty-icon">₦</p>
+      <p class="empty-title">No {{ status_filter if status_filter != 'all' else '' }} payouts</p>
+      <p class="empty-body">Payouts are created automatically when a paid job is marked complete.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

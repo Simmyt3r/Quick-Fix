@@ -650,6 +650,17 @@ footer{
   margin:8px 0 24px;
   font-size:15px;
 }
+.settings-status-badge{ margin-bottom:16px; display:inline-block; }
+.settings-webhook-note{
+  margin-top:20px;
+  word-break:break-all;
+}
+.settings-webhook-note code{
+  background:var(--paper-alt);
+  padding:2px 6px;
+  border-radius:4px;
+  font-size:13px;
+}
 .btn-google{
   background:#fff;
   border:1.5px solid var(--line);

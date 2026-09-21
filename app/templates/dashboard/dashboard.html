@@ -3,8 +3,8 @@
 {% block main_class %}no-wrap{% endblock %}
 {% block content %}
 
-{% set status_badge = {'pending': 'amber', 'accepted': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
-{% set status_label = {'pending': 'Pending', 'accepted': 'Accepted', 'completed': 'Done', 'cancelled': 'Cancelled'} %}
+{% set status_badge = {'pending': 'amber', 'accepted': 'amber', 'in_progress': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
+{% set status_label = {'pending': 'Pending', 'accepted': 'Awaiting payment', 'in_progress': 'In progress', 'completed': 'Done', 'cancelled': 'Cancelled'} %}
 {% set category_icon = {
   'Electrician': '⚡', 'Plumber': '🚰', 'Mechanic': '🚗',
   'Builder': '🧱', 'Barber': '✂️'
@@ -63,6 +63,14 @@
       <a href="{{ url_for('admin.activity') }}" class="tile">
         <span class="tile-icon">📋</span>
         <span class="tile-label">Activity log</span>
+      </a>
+      <a href="{{ url_for('admin.payouts') }}" class="tile">
+        <span class="tile-icon">₦</span>
+        <span class="tile-label">Payouts{% if stats.payouts_owed_count %} ({{ stats.payouts_owed_count }}){% endif %}</span>
+      </a>
+      <a href="{{ url_for('admin.settings') }}" class="tile">
+        <span class="tile-icon">⚙️</span>
+        <span class="tile-label">Payment settings{% if not stats.paystack_configured %} ⚠️{% endif %}</span>
       </a>
     </div>
   </section>
@@ -160,7 +168,7 @@
             <span>{{ category_icon.get(r.category, '🔧') }}</span>
           </div>
           <div class="feed-body">
-            <p class="feed-title">{{ r.category }}</p>
+            <p class="feed-title">{{ r.category }}{% if r.price %} — ₦{{ '{:,}'.format(r.price // 100) }}{% endif %}</p>
             <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b') }}</p>
           </div>
           <div class="feed-right">
@@ -169,6 +177,11 @@
             <form method="POST" action="{{ url_for('requests.cancel', request_id=r.id) }}" class="feed-inline-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="feed-cancel">Cancel</button>
+            </form>
+            {% elif r.status == 'accepted' %}
+            <form method="POST" action="{{ url_for('payments.start', request_id=r.id) }}" class="feed-inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-primary btn-sm">Pay now</button>
             </form>
             {% elif r.status == 'completed' %}
               {% if r.review %}
@@ -262,12 +275,9 @@
           </div>
           <div class="feed-body">
             <p class="feed-title">{{ r.description[:55] }}{% if r.description|length > 55 %}…{% endif %}</p>
-            <p class="feed-sub">{{ r.location }} · {{ r.urgency.replace('_',' ') | capitalize }}</p>
+            <p class="feed-sub">{{ r.location }} · {{ r.urgency.replace('_',' ') | capitalize }}{% if r.proposed_price %} · Budget: ₦{{ '{:,}'.format(r.proposed_price // 100) }}{% endif %}</p>
           </div>
-          <form method="POST" action="{{ url_for('requests.accept', request_id=r.id) }}" class="feed-right">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-primary btn-sm">Accept</button>
-          </form>
+          <a href="{{ url_for('requests.accept_form', request_id=r.id) }}" class="btn btn-primary btn-sm">Accept</a>
         </li>
         {% endfor %}
       </ul>
@@ -295,11 +305,11 @@
           </div>
           <div class="feed-body">
             <p class="feed-title">{{ r.description[:55] }}{% if r.description|length > 55 %}…{% endif %}</p>
-            <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b') }}</p>
+            <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b') }}{% if r.price %} · ₦{{ '{:,}'.format(r.price // 100) }}{% endif %}</p>
           </div>
           <div class="feed-right">
             <span class="badge badge-{{ status_badge[r.status] }}">{{ status_label[r.status] }}</span>
-            {% if r.status == 'accepted' %}
+            {% if r.status == 'in_progress' %}
             <form method="POST" action="{{ url_for('requests.complete', request_id=r.id) }}" class="feed-inline-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-primary btn-sm">Done</button>

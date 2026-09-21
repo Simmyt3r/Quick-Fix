@@ -70,6 +70,14 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
       Activity log
     </a>
+    <a href="{{ url_for('admin.payouts') }}" class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.payout') or request.endpoint == 'admin.mark_payout_paid' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Payouts
+    </a>
+    <a href="{{ url_for('admin.settings') }}" class="sidebar-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v6m0 6v10M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m6 0h10M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg>
+      Payment settings
+    </a>
     {% endif %}
   </nav>
 

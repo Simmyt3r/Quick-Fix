@@ -3,8 +3,8 @@
 {% block main_class %}no-wrap{% endblock %}
 {% block content %}
 
-{% set status_badge = {'accepted': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
-{% set status_label = {'accepted': 'In progress', 'completed': 'Completed', 'cancelled': 'Cancelled'} %}
+{% set status_badge = {'accepted': 'amber', 'in_progress': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
+{% set status_label = {'accepted': 'Awaiting payment', 'in_progress': 'In progress', 'completed': 'Completed', 'cancelled': 'Cancelled'} %}
 {% set category_icon = {
   'Electrician': '⚡', 'Plumber': '🚰', 'Mechanic': '🚗',
   'Builder': '🧱', 'Barber': '✂️'
@@ -29,7 +29,8 @@
 
 <div class="admin-filter-bar">
   <a href="{{ url_for('dashboard.job_history', status='all') }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
-  <a href="{{ url_for('dashboard.job_history', status='accepted') }}" class="btn {% if status_filter == 'accepted' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">In progress</a>
+  <a href="{{ url_for('dashboard.job_history', status='accepted') }}" class="btn {% if status_filter == 'accepted' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Awaiting payment</a>
+  <a href="{{ url_for('dashboard.job_history', status='in_progress') }}" class="btn {% if status_filter == 'in_progress' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">In progress</a>
   <a href="{{ url_for('dashboard.job_history', status='completed') }}" class="btn {% if status_filter == 'completed' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Completed</a>
   <a href="{{ url_for('dashboard.job_history', status='cancelled') }}" class="btn {% if status_filter == 'cancelled' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Cancelled</a>
 </div>
@@ -47,7 +48,7 @@
         </div>
         <div class="feed-body">
           <p class="feed-title">{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</p>
-          <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b %Y') }}</p>
+          <p class="feed-sub">{{ r.location }} · {{ r.created_at.strftime('%d %b %Y') }}{% if r.price %} · ₦{{ '{:,}'.format(r.price // 100) }}{% endif %}</p>
           {% if r.review %}
           <p class="feed-sub">{{ '★' * r.review.rating }}{{ '☆' * (5 - r.review.rating) }}{% if r.review.comment %} — {{ r.review.comment[:60] }}{% endif %}</p>
           {% endif %}

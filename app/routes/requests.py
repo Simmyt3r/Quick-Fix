@@ -2,12 +2,13 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
-from app.models import VALID_CATEGORIES, Review, ServiceRequest, User
+from app.models import VALID_CATEGORIES, Payout, Review, ServiceRequest, User
 from app.validation import clean_str, valid_choice, valid_int
 
 requests_bp = Blueprint("requests", __name__, url_prefix="/requests")
 
 VALID_URGENCY = {"today", "this_week", "flexible"}
+MIN_PRICE_KOBO = 100_00  # ₦100 floor — guards against a fat-fingered ₦1 job
 
 
 @requests_bp.route("/new", methods=["GET"])
@@ -52,6 +53,11 @@ def new():
     location = clean_str(request.form.get("location"), max_length=255, required=True)
     urgency = valid_choice(request.form.get("urgency"), VALID_URGENCY, default="flexible")
 
+    # Entered in naira, stored in kobo (Paystack's minor unit) — see the
+    # comment on ServiceRequest.price in models.py for why.
+    proposed_naira = valid_int(request.form.get("proposed_price"), min_value=1)
+    proposed_price = proposed_naira * 100 if proposed_naira else None
+
     requested_professional_id = None
     pro_id = valid_int(request.form.get("requested_professional_id"), min_value=1)
     if pro_id:
@@ -76,6 +82,7 @@ def new():
         location=location,
         urgency=urgency,
         requested_professional_id=requested_professional_id,
+        proposed_price=proposed_price,
     )
     db.session.add(job)
     db.session.commit()
@@ -127,12 +134,41 @@ def accept(request_id):
         flash("That request isn't in your trade.", "error")
         return redirect(url_for("dashboard.home"))
 
+    # Entered in naira, stored in kobo. Defaults to the customer's
+    # proposed price if the pro submits the form without changing it —
+    # see requests/accept.html, which pre-fills the field with that value.
+    price_naira = valid_int(request.form.get("price"), min_value=1)
+    price = price_naira * 100 if price_naira else job.proposed_price
+
+    if not price or price < MIN_PRICE_KOBO:
+        flash(f"Please set a price of at least ₦{MIN_PRICE_KOBO // 100}.", "error")
+        return redirect(url_for("requests.accept_form", request_id=job.id))
+
     job.professional_id = current_user.id
+    job.price = price
     job.status = "accepted"
     db.session.commit()
 
-    flash("Job accepted — it now shows under Your jobs.", "success")
+    flash("Job accepted — the customer will be asked to pay before you start.", "success")
     return redirect(url_for("dashboard.home"))
+
+
+@requests_bp.route("/<int:request_id>/accept", methods=["GET"])
+@login_required
+def accept_form(request_id):
+    """Standalone page for a professional to set the price when accepting
+    — a plain 'Accept' button with no price step would leave price
+    unset, which the accept() route above now requires."""
+    if not current_user.is_professional:
+        flash("Only professional accounts can accept jobs.", "error")
+        return redirect(url_for("dashboard.home"))
+
+    job = ServiceRequest.query.get_or_404(request_id)
+    if job.status != "pending":
+        flash("That request has already been taken.", "error")
+        return redirect(url_for("dashboard.home"))
+
+    return render_template("requests/accept.html", job=job)
 
 
 @requests_bp.route("/<int:request_id>/complete", methods=["POST"])
@@ -143,11 +179,17 @@ def complete(request_id):
     if job.professional_id != current_user.id:
         flash("You can only complete jobs assigned to you.", "error")
         return redirect(url_for("dashboard.home"))
-    if job.status != "accepted":
-        flash("Only accepted jobs can be marked complete.", "error")
+    if job.status != "in_progress":
+        flash("This job needs to be paid for before it can be marked complete.", "error")
         return redirect(url_for("dashboard.home"))
 
     job.status = "completed"
+
+    # What's owed to the professional, once a job is done. No platform
+    # cut is taken yet (amount = the full price) — see the comment on
+    # Payout.amount in models.py for where that would be subtracted.
+    payout = Payout(service_request_id=job.id, professional_id=job.professional_id, amount=job.price)
+    db.session.add(payout)
     db.session.commit()
 
     flash("Nice work — job marked complete.", "success")

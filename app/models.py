@@ -143,7 +143,12 @@ class ServiceRequest(db.Model):
     description = db.Column(db.Text, nullable=False)
     location = db.Column(db.String(255), nullable=False)
     urgency = db.Column(db.String(20), nullable=False, default="flexible")  # today | this_week | flexible
-    status = db.Column(db.String(20), nullable=False, default="pending")  # pending | accepted | completed | cancelled
+    # pending -> accepted (price set, awaiting payment) -> in_progress (paid,
+    # work underway) -> completed. cancelled can happen from pending or accepted.
+    status = db.Column(db.String(20), nullable=False, default="pending")
+
+    proposed_price = db.Column(db.Integer, nullable=True)  # customer's optional budget, in kobo (NGN minor unit)
+    price = db.Column(db.Integer, nullable=True)  # the actual agreed price, in kobo — set when the pro accepts
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -154,6 +159,98 @@ class ServiceRequest(db.Model):
 
     def __repr__(self):
         return f"<ServiceRequest {self.id} {self.category} {self.status}>"
+
+
+class PlatformSetting(db.Model):
+    """Admin-configurable platform settings — currently just the Paystack
+    API keys. Values are stored encrypted (app/crypto.py) since this is
+    the one place in the app holding live payment-provider credentials.
+    A single-row table by convention (id=1) rather than free-form
+    key/value pairs, since there's exactly one thing to configure today;
+    revisit if a second setting shows up."""
+
+    __tablename__ = "platform_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    paystack_public_key = db.Column(db.String(255), nullable=True)  # not secret — safe in plaintext, used client-side
+    paystack_secret_key_encrypted = db.Column(db.Text, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+
+    updated_by = db.relationship("User")
+
+    @property
+    def paystack_secret_key(self):
+        from app.crypto import decrypt_value
+
+        return decrypt_value(self.paystack_secret_key_encrypted)
+
+    @paystack_secret_key.setter
+    def paystack_secret_key(self, value):
+        from app.crypto import encrypt_value
+
+        self.paystack_secret_key_encrypted = encrypt_value(value)
+
+    @property
+    def is_configured(self):
+        return bool(self.paystack_public_key and self.paystack_secret_key)
+
+    def __repr__(self):
+        return f"<PlatformSetting configured={self.is_configured}>"
+
+
+class Payment(db.Model):
+    """One row per payment attempt on a service request. A job can have
+    more than one Payment row if a checkout attempt fails or expires and
+    the customer tries again — only one should ever reach status='paid'
+    per service_request_id, enforced in the route, not the schema (a DB
+    constraint would block legitimate retries after a failed attempt)."""
+
+    __tablename__ = "payments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_request_id = db.Column(db.Integer, db.ForeignKey("service_requests.id"), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    paystack_reference = db.Column(db.String(100), nullable=False, unique=True)
+    amount = db.Column(db.Integer, nullable=False)  # kobo
+    status = db.Column(db.String(20), nullable=False, default="pending")  # pending | paid | failed
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    paid_at = db.Column(db.DateTime, nullable=True)
+
+    service_request = db.relationship("ServiceRequest", backref="payments")
+    customer = db.relationship("User")
+
+    def __repr__(self):
+        return f"<Payment {self.paystack_reference} {self.status}>"
+
+
+class Payout(db.Model):
+    """What's owed (and, once handled, paid) to a professional for a
+    completed and paid job. Manually marked by an admin for now — no
+    automated bank transfer yet, that needs the professional to have a
+    Paystack transfer recipient on file, which is its own sub-flow."""
+
+    __tablename__ = "payouts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    service_request_id = db.Column(db.Integer, db.ForeignKey("service_requests.id"), nullable=False, unique=True)
+    professional_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    amount = db.Column(db.Integer, nullable=False)  # kobo — the job's price, minus the platform's cut once one exists
+    status = db.Column(db.String(20), nullable=False, default="owed")  # owed | paid
+    paid_at = db.Column(db.DateTime, nullable=True)
+    paid_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)  # which admin marked it paid
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    service_request = db.relationship("ServiceRequest", backref=db.backref("payout", uselist=False))
+    professional = db.relationship("User", foreign_keys=[professional_id])
+    paid_by = db.relationship("User", foreign_keys=[paid_by_id])
+
+    def __repr__(self):
+        return f"<Payout job={self.service_request_id} {self.status}>"
 
 
 class Review(db.Model):

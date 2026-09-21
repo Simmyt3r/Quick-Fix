@@ -4,7 +4,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import AdminAction, Incident, ServiceRequest, User
+from app.models import AdminAction, Incident, PlatformSetting, Payout, ServiceRequest, User
 from app.uploads import verification_doc_url
 from app.validation import clean_str, valid_choice, valid_int
 
@@ -257,3 +257,80 @@ def resolve_incident(incident_id):
 def activity():
     entries = AdminAction.query.order_by(AdminAction.created_at.desc()).limit(150).all()
     return render_template("admin/activity.html", entries=entries)
+
+
+# ─────────────────────── Platform settings (Paystack) ───────────────────────
+
+@admin_bp.route("/settings", methods=["GET", "POST"])
+@admin_required
+def settings():
+    row = PlatformSetting.query.get(1)
+    if row is None:
+        row = PlatformSetting(id=1)
+        db.session.add(row)
+        db.session.commit()
+
+    if request.method == "POST":
+        public_key = clean_str(request.form.get("paystack_public_key"), max_length=255)
+        secret_key = clean_str(request.form.get("paystack_secret_key"), max_length=255)
+
+        row.paystack_public_key = public_key or None
+        # Only overwrite the stored secret if a new one was actually
+        # typed — the form never echoes the real secret back (see the
+        # template), so a blank submit means "leave it as-is", not
+        # "clear it".
+        if secret_key:
+            row.paystack_secret_key = secret_key
+        row.updated_by_id = current_user.id
+
+        log_action("update_platform_settings", detail="Paystack keys updated")
+        db.session.commit()
+
+        flash("Payment settings saved.", "success")
+        return redirect(url_for("admin.settings"))
+
+    return render_template("admin/settings.html", row=row)
+
+
+# ─────────────────────── Payouts ───────────────────────
+
+@admin_bp.route("/payouts")
+@admin_required
+def payouts():
+    status_filter = valid_choice(request.args.get("status"), {"owed", "paid", "all"}, default="owed")
+    query = Payout.query
+    if status_filter in ("owed", "paid"):
+        query = query.filter_by(status=status_filter)
+    entries = query.order_by(Payout.created_at.desc()).limit(200).all()
+    total_owed = (
+        db.session.query(db.func.coalesce(db.func.sum(Payout.amount), 0))
+        .filter(Payout.status == "owed")
+        .scalar()
+    )
+    return render_template(
+        "admin/payouts.html", entries=entries, status_filter=status_filter, total_owed=total_owed
+    )
+
+
+@admin_bp.route("/payouts/<int:payout_id>/mark-paid", methods=["POST"])
+@admin_required
+def mark_payout_paid(payout_id):
+    from datetime import datetime
+
+    payout = Payout.query.get_or_404(payout_id)
+    if payout.status == "paid":
+        flash("That payout is already marked paid.", "error")
+        return redirect(url_for("admin.payouts"))
+
+    payout.status = "paid"
+    payout.paid_at = datetime.utcnow()
+    payout.paid_by_id = current_user.id
+    log_action(
+        "mark_payout_paid",
+        target_user=payout.professional,
+        detail=f"₦{payout.amount / 100:,.2f} for job #{payout.service_request_id}",
+    )
+    db.session.commit()
+
+    flash("Payout marked as sent.", "success")
+    return redirect(url_for("admin.payouts"))

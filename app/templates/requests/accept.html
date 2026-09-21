@@ -1,0 +1,40 @@
+{% extends "base_app.html" %}
+{% block title %}Accept job — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="{{ url_for('dashboard.home') }}" class="page-back" aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <h1 class="page-title">Set your price</h1>
+  <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+</div>
+
+<div class="form-page">
+  <div class="requested-pro-banner">
+    <div>
+      <p class="requested-pro-label">{{ job.category }}</p>
+      <p class="requested-pro-name">{{ job.description[:80] }}{% if job.description|length > 80 %}…{% endif %}</p>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('requests.accept', request_id=job.id) }}" class="dash-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>Your price
+      <input type="number" name="price" min="100" step="1" required
+             value="{{ (job.proposed_price // 100) if job.proposed_price else '' }}"
+             placeholder="e.g. 5000">
+      <span class="field-note">
+        In ₦
+        {% if job.proposed_price %}— customer proposed ₦{{ '{:,}'.format(job.proposed_price // 100) }}{% endif %}
+      </span>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-full">Accept &amp; set price</button>
+  </form>
+</div>
+{% endblock %}

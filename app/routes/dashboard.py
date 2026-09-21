@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import ContactSubmission, Incident, Review, ServiceRequest, User
+from app.models import ContactSubmission, Incident, Payout, Review, ServiceRequest, User
+from app.paystack import paystack_configured
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -32,6 +33,8 @@ def home():
                 is_professional=True, verified=False, disabled=False
             ).count(),
             "open_incidents": Incident.query.filter_by(status="open").count(),
+            "payouts_owed_count": Payout.query.filter_by(status="owed").count(),
+            "paystack_configured": paystack_configured(),
         }
         return render_template("dashboard/dashboard.html", **context)
 
@@ -61,7 +64,7 @@ def home():
         context["my_jobs"] = (
             ServiceRequest.query.filter(
                 ServiceRequest.professional_id == current_user.id,
-                ServiceRequest.status.in_(["accepted", "completed"]),
+                ServiceRequest.status.in_(["accepted", "in_progress", "completed"]),
             )
             .order_by(ServiceRequest.created_at.desc())
             .limit(20)
@@ -102,9 +105,9 @@ def job_history():
     status_filter = request.args.get("status") or "all"
     query = ServiceRequest.query.filter(
         ServiceRequest.professional_id == current_user.id,
-        ServiceRequest.status.in_(["accepted", "completed", "cancelled"]),
+        ServiceRequest.status.in_(["accepted", "in_progress", "completed", "cancelled"]),
     )
-    if status_filter in ("accepted", "completed", "cancelled"):
+    if status_filter in ("accepted", "in_progress", "completed", "cancelled"):
         query = query.filter(ServiceRequest.status == status_filter)
 
     jobs = query.order_by(ServiceRequest.created_at.desc()).all()

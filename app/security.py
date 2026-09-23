@@ -2,10 +2,14 @@ from flask import request
 
 CSP = (
     "default-src 'self'; "
-    "script-src 'self'; "
-    "style-src 'self' https://fonts.googleapis.com; "
+    "script-src 'self' https://api.mapbox.com https://js.pusher.com 'wasm-unsafe-eval'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; "
     "font-src https://fonts.gstatic.com; "
-    "img-src 'self' data: https://res.cloudinary.com; "
+    "img-src 'self' data: blob: https://res.cloudinary.com; "
+    "worker-src blob: ; "
+    "child-src blob: ; "
+    "connect-src 'self' https://*.tiles.mapbox.com https://api.mapbox.com https://events.mapbox.com "
+    "https://*.pusher.com wss://*.pusher.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "frame-ancestors 'none'"

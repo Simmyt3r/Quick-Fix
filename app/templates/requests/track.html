@@ -1,0 +1,49 @@
+{% extends "base_app.html" %}
+{% block title %}Track your job — QuickFix Nearby{% endblock %}
+{% block main_class %}no-wrap{% endblock %}
+{% block body_attrs %}data-job-id="{{ job.id }}"{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <a href="{{ url_for('dashboard.home') }}" class="page-back" aria-label="Back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <h1 class="page-title">Track your job</h1>
+  <button class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+</div>
+
+<div class="track-summary">
+  <p class="track-category">{{ job.category }} — {{ job.description[:80] }}{% if job.description|length > 80 %}…{% endif %}</p>
+  <p class="track-location">{{ job.location }}</p>
+  {% if job.professional %}<p class="track-pro">{{ job.professional.name }}</p>{% endif %}
+</div>
+
+{% if job.status == 'in_progress' and mapbox_token and job.location_lat and job.location_lng %}
+  <div id="track-map" class="track-map"
+       data-mapbox-token="{{ mapbox_token }}"
+       data-pusher-key="{{ pusher_key }}"
+       data-pusher-cluster="{{ pusher_cluster }}"
+       data-job-id="{{ job.id }}"
+       data-job-lat="{{ job.location_lat }}"
+       data-job-lng="{{ job.location_lng }}"></div>
+  <p id="track-status" class="track-status-note">Waiting for {{ job.professional.name.split(' ')[0] if job.professional else 'your pro' }}'s location…</p>
+
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.18.1/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.1/mapbox-gl.js"></script>
+  {% if pusher_key %}<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>{% endif %}
+  <script src="{{ url_for('static', filename='js/track-map.js') }}"></script>
+{% elif job.status == 'in_progress' %}
+  <div class="empty-card">
+    <p class="empty-title">Live map isn't available right now</p>
+    <p class="empty-body">Tracking needs a couple of things set up on our end — the job itself is still in progress.</p>
+  </div>
+{% else %}
+  <div class="empty-card">
+    <p class="empty-title">Nothing to track yet</p>
+    <p class="empty-body">The live map appears once your pro has been paid and is on the job.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

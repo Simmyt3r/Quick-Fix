@@ -1,6 +1,8 @@
 {% extends "base_app.html" %}
 {% block title %}Home — QuickFix Nearby{% endblock %}
 {% block main_class %}no-wrap{% endblock %}
+{% set active_job = my_jobs | selectattr('status', 'equalto', 'in_progress') | first if my_jobs else none %}
+{% block body_attrs %}{% if current_user.is_professional and current_user.professional_profile and current_user.professional_profile.available %}data-share-location="true"{% if active_job %} data-tracking-job-id="{{ active_job.id }}"{% endif %}{% endif %}{% endblock %}
 {% block content %}
 
 {% set status_badge = {'pending': 'amber', 'accepted': 'amber', 'in_progress': 'blue', 'completed': 'green', 'cancelled': 'muted'} %}
@@ -183,6 +185,8 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-primary btn-sm">Pay now</button>
             </form>
+            {% elif r.status == 'in_progress' %}
+            <a href="{{ url_for('requests.track', request_id=r.id) }}" class="btn btn-primary btn-sm">Track</a>
             {% elif r.status == 'completed' %}
               {% if r.review %}
               <span class="feed-stars" aria-label="You rated this {{ r.review.rating }} out of 5">{{ '★' * r.review.rating }}{{ '☆' * (5 - r.review.rating) }}</span>
@@ -334,5 +338,8 @@
 
 <script src="{{ url_for('static', filename='js/review-toggle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/availability-toggle.js') }}"></script>
+{% if current_user.is_professional %}
+<script src="{{ url_for('static', filename='js/location-share.js') }}"></script>
+{% endif %}
 {% endblock %}
 

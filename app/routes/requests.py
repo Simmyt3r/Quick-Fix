@@ -2,6 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db, limiter
+from app.geocoding import geocode
 from app.models import VALID_CATEGORIES, Payout, Review, ServiceRequest, User
 from app.validation import clean_str, valid_choice, valid_int
 
@@ -75,11 +76,16 @@ def new():
         flash("Please describe the job and share a location.", "error")
         return redirect(url_for("dashboard.home"))
 
+    coords = geocode(location)
+    location_lat, location_lng = coords if coords else (None, None)
+
     job = ServiceRequest(
         customer_id=current_user.id,
         category=category,
         description=description,
         location=location,
+        location_lat=location_lat,
+        location_lng=location_lng,
         urgency=urgency,
         requested_professional_id=requested_professional_id,
         proposed_price=proposed_price,
@@ -231,3 +237,19 @@ def review(request_id):
 
     flash("Thanks for the feedback!", "success")
     return redirect(url_for("dashboard.home"))
+
+
+@requests_bp.route("/<int:request_id>/track")
+@login_required
+def track(request_id):
+    """Live map view for a customer's job — only meaningful once
+    in_progress (paid, professional en route/working), since that's the
+    only state Professional.current_lat/lng is being updated for THIS
+    job specifically. Still viewable at other statuses, just without a
+    live pin, so the URL doesn't 404 on someone who bookmarks it."""
+    job = ServiceRequest.query.get_or_404(request_id)
+    if job.customer_id != current_user.id:
+        flash("You can only track your own requests.", "error")
+        return redirect(url_for("dashboard.home"))
+
+    return render_template("requests/track.html", job=job)

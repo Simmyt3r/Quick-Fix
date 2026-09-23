@@ -97,6 +97,16 @@ class Professional(db.Model):
     coverage_area = db.Column(db.String(255), nullable=True)  # free-text for now, e.g. "Wuse, Garki, Asokoro"
     available = db.Column(db.Boolean, nullable=False, default=True)  # toggled by the pro; False = "not taking jobs right now"
 
+    # Live position — ONLY the current point is ever stored, never a
+    # history/trail. Updated continuously by the pro's browser while
+    # available=True (used for distance-sorted matching) and while an
+    # accepted job is in_progress (used for the customer's live-tracking
+    # view on that one job — see app/routes/location.py). Cleared to
+    # None whenever the pro goes unavailable, so a stale pin never lingers.
+    current_lat = db.Column(db.Float, nullable=True)
+    current_lng = db.Column(db.Float, nullable=True)
+    location_updated_at = db.Column(db.DateTime, nullable=True)
+
     # Verification document — a photo of an ID/certificate, uploaded to
     # Cloudinary as a private asset (never a public URL, unlike avatars).
     # doc_format is needed alongside the public_id to build a signed URL
@@ -142,6 +152,14 @@ class ServiceRequest(db.Model):
     category = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text, nullable=False)
     location = db.Column(db.String(255), nullable=False)
+    # Geocoded from the location text above via Mapbox at creation time
+    # (app/geocoding.py). Nullable: geocoding can fail (bad address,
+    # Mapbox down, not configured) and the job should still be creatable
+    # without blocking on it — distance-sorted matching just falls back
+    # to the existing category-only order for a request with no
+    # coordinates. See requests.py:new.
+    location_lat = db.Column(db.Float, nullable=True)
+    location_lng = db.Column(db.Float, nullable=True)
     urgency = db.Column(db.String(20), nullable=False, default="flexible")  # today | this_week | flexible
     # pending -> accepted (price set, awaiting payment) -> in_progress (paid,
     # work underway) -> completed. cancelled can happen from pending or accepted.

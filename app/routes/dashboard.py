@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
+from app.geocoding import haversine_km
 from app.models import ContactSubmission, Incident, Payout, Review, ServiceRequest, User
 from app.paystack import paystack_configured
 
@@ -46,21 +47,36 @@ def home():
         )
 
     if current_user.is_professional:
-        context["open_requests"] = (
-            ServiceRequest.query.filter(
-                ServiceRequest.status == "pending",
-                ServiceRequest.category == current_user.service_category,
-                db.or_(
-                    ServiceRequest.requested_professional_id.is_(None),
-                    ServiceRequest.requested_professional_id == current_user.id,
-                ),
+        if not current_user.service_category:
+            open_requests = []
+        else:
+            open_requests = (
+                ServiceRequest.query.filter(
+                    ServiceRequest.status == "pending",
+                    ServiceRequest.category == current_user.service_category,
+                    db.or_(
+                        ServiceRequest.requested_professional_id.is_(None),
+                        ServiceRequest.requested_professional_id == current_user.id,
+                    ),
+                )
+                .order_by(ServiceRequest.created_at.desc())
+                .limit(50)  # pull more than we'll show, since distance-sorting reorders before the final cap
+                .all()
             )
-            .order_by(ServiceRequest.created_at.desc())
-            .limit(20)
-            .all()
-            if current_user.service_category
-            else []
-        )
+
+            pro_profile = current_user.professional_profile
+            if pro_profile and pro_profile.current_lat is not None and pro_profile.current_lng is not None:
+                # Distance-sorted when we know where the pro is right now —
+                # jobs with no geocoded coordinates (address didn't geocode)
+                # sort last rather than being dropped from the list entirely.
+                def _distance(job):
+                    if job.location_lat is None or job.location_lng is None:
+                        return float("inf")
+                    return haversine_km(pro_profile.current_lat, pro_profile.current_lng, job.location_lat, job.location_lng)
+
+                open_requests = sorted(open_requests, key=_distance)
+
+        context["open_requests"] = open_requests[:20]
         context["my_jobs"] = (
             ServiceRequest.query.filter(
                 ServiceRequest.professional_id == current_user.id,

@@ -45,6 +45,14 @@ def update():
         profile = current_user.ensure_professional_profile()
         profile.coverage_area = clean_str(request.form.get("coverage_area"), max_length=255) or None
         profile.available = request.form.get("available") == "on"
+        if not profile.available:
+            # Never leave a stale position visible once a pro goes
+            # offline — this is the privacy guarantee live location
+            # sharing is built around (see Professional.current_lat's
+            # comment in models.py).
+            profile.current_lat = None
+            profile.current_lng = None
+            profile.location_updated_at = None
     else:
         current_user.service_category = None
 

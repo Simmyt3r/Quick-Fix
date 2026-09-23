@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="app-body {% if current_user.is_authenticated %}has-sidebar{% endif %}">
+<body class="app-body {% if current_user.is_authenticated %}has-sidebar{% endif %}" {% block body_attrs %}{% endblock %}>
 
 {% if current_user.is_authenticated %}
   {% include "_sidebar.html" %}

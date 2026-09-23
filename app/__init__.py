@@ -67,6 +67,21 @@ def create_app():
         # Keeps the footer copyright year correct without a redeploy every January.
         return {"current_year": datetime.now(timezone.utc).year}
 
+    @app.context_processor
+    def inject_client_config():
+        # Both of these are PUBLIC by design (a Mapbox pk. token and a
+        # Pusher app key — not the secret), safe to render straight into
+        # HTML/JS. Templates use mapbox_token/pusher_key to decide
+        # whether to render a map or tracking UI at all, and pass the
+        # values to the client-side libraries.
+        import os
+
+        return {
+            "mapbox_token": os.environ.get("MAPBOX_ACCESS_TOKEN", ""),
+            "pusher_key": os.environ.get("PUSHER_KEY", ""),
+            "pusher_cluster": os.environ.get("PUSHER_CLUSTER", ""),
+        }
+
     from app.uploads import init_cloudinary
 
     init_cloudinary(app)
@@ -87,6 +102,7 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.pros import pros_bp
     from app.routes.payments import payments_bp
+    from app.routes.location import location_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -96,6 +112,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(pros_bp)
     app.register_blueprint(payments_bp)
+    app.register_blueprint(location_bp)
 
     from app.cli import create_admin
 
